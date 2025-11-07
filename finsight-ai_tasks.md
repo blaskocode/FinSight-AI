@@ -40,13 +40,13 @@
 
 ---
 
-### PR-2: Database Schema & SQLite Setup
+### PR-2: Database Schema & SQLite Setup ✅
 **Estimated Effort**: 3-4 hours
 
 #### Tasks:
-- [ ] Design normalized SQLite schema (see detailed schema below)
-- [ ] Create migration script: `backend/db/migrations/001_initial_schema.sql`
-- [ ] Implement tables:
+- [x] Design normalized SQLite schema (see detailed schema below)
+- [x] Create migration script: `backend/db/migrations/001_initial_schema.sql`
+- [x] Implement tables:
   - `users` (user_id, email, name, created_at)
   - `accounts` (account_id, user_id, type, subtype, balances JSON, currency)
   - `transactions` (txn_id, account_id, date, amount, merchant_name, category, pending)
@@ -55,11 +55,12 @@
   - `personas` (persona_id, user_id, persona_type, assigned_at, window_days, signals JSON)
   - `recommendations` (rec_id, user_id, persona_id, type, content, rationale, created_at)
   - `audit_log` (log_id, admin_id, user_id, action, timestamp)
-- [ ] Create database initialization script: `backend/db/init.js`
-- [ ] Create database helper module: `backend/db/db.js` with connection pooling
-- [ ] Test: Run migration, verify tables exist, insert test row
+  - `chat_cache` (cache_id, user_id, query_hash, response, expires_at) - Bonus table for AI caching
+- [x] Create database initialization script: `backend/db/init.ts`
+- [x] Create database helper module: `backend/db/db.ts` with connection pooling
+- [x] Test: Run migration, verify tables exist, insert test row
 
-**Deliverable**: Working SQLite database with schema
+**Deliverable**: Working SQLite database with schema ✅
 
 ---
 

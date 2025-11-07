@@ -7,6 +7,18 @@ globs: **/tasks/**/*.md, **/tasks-*.md
 
 // Description: Guidelines for managing task lists in markdown files to track progress on completing a PRD
 // Recommended Globs: **/tasks/**/*.md, **/tasks-*.md
+// IMPORTANT: This rule does NOT apply to `finsight-ai_tasks.md` in the project root.
+// The main project task list is governed by `project-workflow.mdc` which allows sequential task execution.
+
+## Scope
+
+**This rule applies ONLY to task lists in the `/tasks/` directory or files matching `tasks-*.md` pattern.**
+
+**This rule does NOT apply to:**
+- `finsight-ai_tasks.md` (main project task list in root directory)
+- Any task list files outside the `/tasks/` directory
+
+The main project task list (`finsight-ai_tasks.md`) follows the workflow defined in `project-workflow.mdc`, which allows working through tasks sequentially without requiring approval for each sub-task.
 
 Guidelines for managing task lists in markdown files to track progress on completing a PRD
 

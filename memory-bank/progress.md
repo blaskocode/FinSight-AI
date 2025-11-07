@@ -28,17 +28,18 @@
 
 ## What's Left to Build
 
-### MVP Remaining (PR-2 through PR-9)
+### MVP Remaining (PR-3 through PR-9)
 
-#### PR-2: Database Schema & SQLite Setup ⏳ NEXT
-- [ ] Design normalized SQLite schema
-- [ ] Create migration script
-- [ ] Implement all 8 tables
-- [ ] Database initialization script
-- [ ] Database helper module
-- [ ] Test database setup
+#### PR-2: Database Schema & SQLite Setup ✅ (COMPLETE)
+- [x] Design normalized SQLite schema
+- [x] Create migration script: `backend/db/migrations/001_initial_schema.sql`
+- [x] Implement all 9 tables (users, accounts, transactions, liabilities, consents, personas, recommendations, audit_log, chat_cache)
+- [x] Database initialization script: `backend/db/init.ts`
+- [x] Database helper module: `backend/db/db.ts` with singleton connection pattern
+- [x] Test database setup (verified all tables, test insert/query/delete successful)
+- [x] npm scripts added: `db:init` and `db:migrate`
 
-#### PR-3: Minimal Synthetic Data Generator
+#### PR-3: Minimal Synthetic Data Generator ⏳ NEXT
 - [ ] Create data generator module
 - [ ] Generate 5 test users (1 per persona)
 - [ ] Generate 3 months of transaction history
@@ -130,19 +131,19 @@
 ## Current Status
 
 ### Overall Progress
-- **MVP**: 1/9 PRs complete (11%)
+- **MVP**: 2/9 PRs complete (22%)
 - **Phase 1**: 0/6 PRs complete (0%)
 - **Phase 2**: 0/6 PRs complete (0%)
 - **Phase 3**: 0/5 PRs complete (0%)
 - **Phase 4**: 0/6 PRs complete (0%)
 - **Phase 5**: 0/10 PRs complete (0%)
 
-**Total**: 1/42 PRs complete (2.4%)
+**Total**: 2/42 PRs complete (4.8%)
 
 ### Next Milestone
 **MVP Completion** - Target: 9 PRs total
-- Current: 1/9 complete
-- Next: PR-2 (Database Schema & SQLite Setup)
+- Current: 2/9 complete
+- Next: PR-3 (Minimal Synthetic Data Generator)
 
 ## Known Issues
 
@@ -198,14 +199,12 @@
 1. ✅ **Project Foundation**: Clean monorepo structure with proper tooling
 2. ✅ **Development Environment**: One-command setup working smoothly
 3. ✅ **Documentation**: Comprehensive PRD and task breakdown
+4. ✅ **Database Schema**: Complete normalized SQLite schema with 9 tables, indexes, and foreign keys
+5. ✅ **Database Infrastructure**: Helper module with singleton pattern, initialization script, and testing capability
 
 ## Upcoming Focus Areas
 
-1. **Database Foundation** (PR-2)
-   - Critical for all future development
-   - Must be well-designed for scalability
-
-2. **Test Data Generation** (PR-3)
+1. **Test Data Generation** (PR-3) ⏳ NEXT
    - Need realistic data to develop against
    - Will inform feature detection requirements
 

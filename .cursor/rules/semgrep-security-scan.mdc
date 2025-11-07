@@ -1,6 +1,6 @@
 ---
 description: Mandatory security scanning of all generated code using Semgrep MCP server
-alwaysApply: false
+alwaysApply: true
 ---
 # Rule: Semgrep MCP Security Scan
 
