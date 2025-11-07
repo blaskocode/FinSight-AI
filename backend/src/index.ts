@@ -1,6 +1,11 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { assignHighUtilizationPersona, storePersonaAssignment, getCurrentPersona } from '../personas/assignPersona';
+import { generateRecommendations, storeRecommendations, getRecommendations } from '../recommendations/engine';
+import { recordConsent, revokeConsent, getConsentRecord } from '../guardrails/consent';
+import { requireConsent } from '../middleware/requireConsent';
+import { get } from '../db/db';
 
 dotenv.config();
 
@@ -19,6 +24,176 @@ app.get('/api/health', (req: Request, res: Response) => {
 // Root endpoint
 app.get('/api', (req: Request, res: Response) => {
   res.json({ message: 'Welcome to FinSight AI API' });
+});
+
+// Consent endpoint - Record or revoke user consent
+app.post('/api/consent', async (req: Request, res: Response) => {
+  try {
+    const { user_id, consented } = req.body;
+
+    if (!user_id || typeof consented !== 'boolean') {
+      return res.status(400).json({ 
+        error: 'Invalid request', 
+        message: 'user_id and consented (boolean) are required' 
+      });
+    }
+
+    // Verify user exists
+    const user = await get('SELECT * FROM users WHERE user_id = ?', [user_id]);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (consented) {
+      // Record consent
+      const consentId = await recordConsent(user_id);
+      const consentRecord = await getConsentRecord(user_id);
+      
+      res.json({
+        success: true,
+        message: 'Consent recorded successfully',
+        consent_id: consentId,
+        consent: consentRecord
+      });
+    } else {
+      // Revoke consent
+      const revoked = await revokeConsent(user_id);
+      
+      if (revoked) {
+        res.json({
+          success: true,
+          message: 'Consent revoked successfully'
+        });
+      } else {
+        res.status(404).json({
+          error: 'No active consent found',
+          message: 'User does not have an active consent to revoke'
+        });
+      }
+    }
+
+  } catch (error: any) {
+    console.error('Error processing consent:', error);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
+});
+
+// Profile endpoint - Get user's behavioral profile and persona
+// Protected by consent middleware
+app.get('/api/profile/:user_id', requireConsent, async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.user_id;
+
+    // Verify user exists
+    const user = await get('SELECT * FROM users WHERE user_id = ?', [userId]);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check for existing persona assignment
+    let currentPersona = await getCurrentPersona(userId);
+
+    // If no persona assigned or we want to recalculate, assign persona
+    if (!currentPersona) {
+      const assignment = await assignHighUtilizationPersona(userId);
+      
+      if (assignment) {
+        // Store the assignment
+        const personaId = await storePersonaAssignment(userId, assignment);
+        
+        // Get the stored persona
+        currentPersona = await getCurrentPersona(userId);
+      } else {
+        // No persona matches (shouldn't happen for MVP with only High Utilization)
+        return res.json({
+          user_id: userId,
+          persona: null,
+          signals: {},
+          message: 'No persona assigned - criteria not met'
+        });
+      }
+    }
+
+    // Ensure we have a persona (TypeScript null check)
+    if (!currentPersona) {
+      return res.status(500).json({ error: 'Failed to assign persona' });
+    }
+
+    // Return profile with persona and signals
+    res.json({
+      user_id: userId,
+      persona: {
+        type: currentPersona.persona_type,
+        assigned_at: currentPersona.assigned_at,
+        confidence: currentPersona.signals.confidence,
+        criteria_met: currentPersona.signals.criteriaMet
+      },
+      signals: {
+        utilization: currentPersona.signals.utilization,
+        minimum_payment_only: currentPersona.signals.minimumPaymentOnly,
+        interest_charges: currentPersona.signals.interestCharges,
+        is_overdue: currentPersona.signals.isOverdue
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
+});
+
+// Recommendations endpoint - Get personalized recommendations for a user
+// Protected by consent middleware
+app.get('/api/recommendations/:user_id', requireConsent, async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.user_id;
+
+    // Verify user exists
+    const user = await get('SELECT * FROM users WHERE user_id = ?', [userId]);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if recommendations already exist (get unique ones)
+    let recommendations = await getRecommendations(userId, 10);
+
+    // If we have fewer than 4 recommendations (expected: 3 education + 1 partner offer), generate new ones
+    // But only if we don't already have recommendations of each type
+    const educationCount = recommendations.filter(r => r.type === 'education').length;
+    const partnerOfferCount = recommendations.filter(r => r.type === 'partner_offer').length;
+    
+    if (educationCount < 3 || partnerOfferCount < 1) {
+      // Generate new recommendations
+      const newRecommendations = await generateRecommendations(userId);
+      
+      // Store new recommendations in database
+      await storeRecommendations(newRecommendations);
+      
+      // Get all recommendations again (will be deduplicated)
+      recommendations = await getRecommendations(userId, 10);
+    }
+
+    // Format recommendations for response
+    const formattedRecommendations = recommendations.map(rec => ({
+      id: rec.rec_id,
+      type: rec.type,
+      title: rec.content.split(':')[0], // Extract title from content
+      description: rec.content.split(':').slice(1).join(':').trim(),
+      rationale: rec.rationale,
+      impact_estimate: rec.impact_estimate,
+      created_at: rec.created_at
+    }));
+
+    res.json({
+      user_id: userId,
+      recommendations: formattedRecommendations,
+      count: formattedRecommendations.length
+    });
+
+  } catch (error: any) {
+    console.error('Error fetching recommendations:', error);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
 });
 
 // Root path - serve simple HTML page

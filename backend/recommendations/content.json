@@ -1,0 +1,46 @@
+{
+  "high_utilization": {
+    "education": [
+      {
+        "id": "edu-001",
+        "title": "Understanding Credit Utilization and Your Score",
+        "description": "Learn how credit utilization affects your credit score and strategies to improve it",
+        "url": "https://example.com/articles/credit-utilization",
+        "estimatedReadTime": "5 min",
+        "category": "credit_education"
+      },
+      {
+        "id": "edu-002",
+        "title": "Debt Avalanche vs Snowball: Which is Right for You?",
+        "description": "Compare two popular debt payoff strategies and choose the one that fits your situation",
+        "url": "https://example.com/guides/debt-strategies",
+        "estimatedReadTime": "8 min",
+        "category": "debt_management"
+      },
+      {
+        "id": "edu-003",
+        "title": "Setting Up Autopay to Avoid Late Fees",
+        "description": "Step-by-step guide to setting up automatic payments and avoiding costly late fees",
+        "url": "https://example.com/tutorials/autopay-setup",
+        "estimatedReadTime": "3 min",
+        "category": "payment_automation"
+      }
+    ],
+    "partner_offers": [
+      {
+        "id": "offer-001",
+        "title": "Chase Slate Edge - Balance Transfer Card",
+        "description": "0% APR for 18 months on balance transfers, $0 transfer fee for first 60 days",
+        "url": "https://example.com/offers/chase-slate-edge",
+        "type": "balance_transfer_card",
+        "eligibility": {
+          "minCreditScore": 670,
+          "maxUtilization": 100,
+          "excludeExisting": ["chase"]
+        },
+        "impact": "Could save up to $500+ in interest charges over 18 months"
+      }
+    ]
+  }
+}
+
