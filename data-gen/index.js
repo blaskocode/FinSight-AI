@@ -1,5 +1,16 @@
 // Synthetic data generator for FinSight AI
-// This will be implemented in PR-3
+// Entry point for data generation
 
-console.log('Data generator - Coming in PR-3');
+const { generateData } = require('./generator');
+
+// Run data generation
+generateData()
+  .then(() => {
+    console.log('\n✅ Data generation complete!');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('❌ Data generation failed:', error);
+    process.exit(1);
+  });
 
