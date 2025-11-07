@@ -1,0 +1,59 @@
+---
+alwaysApply: true
+---
+## Rule 3: Memory Bank Maintenance - MANDATORY
+
+**CRITICAL**: After EVERY SINGLE PROMPT, you must check if the memory bank needs updates and update it immediately if needed.
+
+### Memory Bank Files:
+Located in `memory-bank/` directory:
+- `projectbrief.md` - Foundation document
+- `productContext.md` - Product vision and user experience
+- `systemPatterns.md` - Architecture and design patterns
+- `techContext.md` - Technology stack and setup
+- `activeContext.md` - Current work focus (MOST LIKELY TO NEED UPDATES)
+- `progress.md` - Project status and what's completed
+
+### Update Triggers:
+Update memory bank files when:
+1. **Task completion**: When a task is finished, update `progress.md` and `activeContext.md`
+2. **New decisions made**: Document in `activeContext.md` or `systemPatterns.md`
+3. **Architecture changes**: Update `systemPatterns.md` and `techContext.md`
+4. **New features added**: Update `productContext.md` if user experience changes
+5. **Technical changes**: Update `techContext.md` for new dependencies or tools
+6. **Status changes**: Update `activeContext.md` for current focus, `progress.md` for completion status
+
+### Update Process:
+1. **After every prompt response**, before finishing:
+   - Review what changed in the conversation
+   - Identify which memory bank files need updates
+   - Update ALL relevant files immediately
+   - Be thorough - better to over-document than under-document
+
+2. **Priority files to check every time**:
+   - `activeContext.md` - Current work focus, recent changes, next steps
+   - `progress.md` - What's completed, what's left, current status
+
+3. **When in doubt**: Update the memory bank. It's better to have redundant information than missing information.
+
+### Update Quality:
+- Be specific and detailed
+- Include context and rationale for decisions
+- Update timestamps or status indicators where relevant
+- Cross-reference related information across files
+
+**Rationale**: The memory bank is the AI's only link to previous work after session resets. It must be maintained with precision and completeness to ensure continuity.
+
+---
+
+## Workflow Summary
+
+For every user interaction:
+1. ✅ Read `finsight-ai_tasks.md` to understand current priorities
+2. ✅ Work on tasks in sequence from the task list
+3. ✅ Never run git commands
+4. ✅ Update `finsight-ai_tasks.md` if tasks need to change
+5. ✅ After completing work, update memory bank files (especially `activeContext.md` and `progress.md`)
+6. ✅ Before finishing response, verify memory bank is up to date
+
+These rules are NOT negotiable and must be followed strictly.

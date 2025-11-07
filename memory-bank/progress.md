@@ -23,6 +23,8 @@
   - PRD (Product Requirements Document)
   - Task breakdown with 42 PRs
   - Architecture diagram (Mermaid)
+  - Memory bank initialized (6 core files)
+  - Cursor rules established (`.cursor/rules/project-workflow.mdc`)
 
 ## What's Left to Build
 

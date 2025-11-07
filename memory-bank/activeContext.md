@@ -45,6 +45,11 @@
 - Project initialized with monorepo structure
 - Backend and frontend basic setup completed
 - Development environment configured
+- Memory bank initialized with all 6 core files
+- Cursor rules established (`.cursor/rules/project-workflow.mdc`):
+  - Rule 1: Never run git commands (absolute prohibition)
+  - Rule 2: `finsight-ai_tasks.md` is universal source of truth - must be updated before any task changes
+  - Rule 3: Memory bank must be updated after every prompt if needed (mandatory)
 
 ## Active Decisions & Considerations
 
@@ -62,6 +67,13 @@
 - **Decision**: Feature-based modules in backend (creditMonitoring, subscriptionDetection, etc.)
 - **Decision**: Shared types in `/shared` directory
 - **Consideration**: Need to establish patterns early for consistency
+
+### Project Workflow Rules
+- **Decision**: Cursor rules established in `.cursor/rules/project-workflow.mdc`
+- **Rule 1**: Never run git commands - user controls all git operations
+- **Rule 2**: `finsight-ai_tasks.md` is the universal source of truth - must be consulted before work, updated before task changes
+- **Rule 3**: Memory bank must be updated after every prompt if changes occur - mandatory maintenance
+- **Enforcement**: These rules are non-negotiable and must be followed strictly
 
 ## Immediate Priorities
 
