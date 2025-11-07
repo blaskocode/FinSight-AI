@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { assignPersona, storePersonaAssignment, getCurrentPersona } from '../personas/assignPersona';
 import { generateRecommendations, storeRecommendations, getRecommendations } from '../recommendations/engine';
+import { generatePaymentPlan, generatePaymentPlansComparison } from '../recommendations/paymentPlanner';
 import { recordConsent, revokeConsent, getConsentRecord } from '../guardrails/consent';
 import { requireConsent } from '../middleware/requireConsent';
 import { get } from '../db/db';
@@ -151,7 +152,8 @@ app.get('/api/recommendations/:user_id', requireConsent, async (req: Request, re
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Check if recommendations already exist (get unique ones)
+    // Check if recommendations already exist (get unique ones, ranked by priority)
+    // Fetch more than needed to ensure good ranking pool
     let recommendations = await getRecommendations(userId, 10);
 
     // If we have fewer than 4 recommendations (expected: 3 education + 1 partner offer), generate new ones
@@ -166,9 +168,12 @@ app.get('/api/recommendations/:user_id', requireConsent, async (req: Request, re
       // Store new recommendations in database
       await storeRecommendations(newRecommendations);
       
-      // Get all recommendations again (will be deduplicated)
+      // Get all recommendations again (will be deduplicated and ranked)
       recommendations = await getRecommendations(userId, 10);
     }
+    
+    // Limit to top 5 ranked recommendations for response
+    recommendations = recommendations.slice(0, 5);
 
     // Format recommendations for response
     const formattedRecommendations = recommendations.map(rec => ({
@@ -190,6 +195,36 @@ app.get('/api/recommendations/:user_id', requireConsent, async (req: Request, re
   } catch (error: any) {
     console.error('Error fetching recommendations:', error);
     res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
+});
+
+// Payment Plan Endpoints
+app.get('/api/payment-plan/:user_id', requireConsent, async (req, res) => {
+  const { user_id: userId } = req.params;
+  const { strategy } = req.query;
+
+  try {
+    const plan = await generatePaymentPlan(
+      userId,
+      strategy === 'snowball' ? 'snowball' : 'avalanche'
+    );
+
+    res.json(plan);
+  } catch (error: any) {
+    console.error('Error generating payment plan:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate payment plan' });
+  }
+});
+
+app.get('/api/payment-plan/:user_id/compare', requireConsent, async (req, res) => {
+  const { user_id: userId } = req.params;
+
+  try {
+    const comparison = await generatePaymentPlansComparison(userId);
+    res.json(comparison);
+  } catch (error: any) {
+    console.error('Error generating payment plan comparison:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate payment plan comparison' });
   }
 });
 

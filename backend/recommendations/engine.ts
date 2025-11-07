@@ -3,12 +3,24 @@
 
 import { getCurrentPersona } from '../personas/assignPersona';
 import { get, all, run } from '../db/db';
+import { filterEligibleOffers } from './eligibility';
+import { rankRecommendations } from './ranker';
+import { generateRationale as generateAIRationale } from '../ai/rationaleGenerator';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Load content catalog
-const contentCatalogPath = path.join(__dirname, 'content.json');
-const contentCatalog = JSON.parse(fs.readFileSync(contentCatalogPath, 'utf-8'));
+// Load content catalog (prefer content-library.json, fallback to content.json for backward compatibility)
+let contentCatalog: any;
+const contentLibraryPath = path.join(__dirname, 'content-library.json');
+const contentPath = path.join(__dirname, 'content.json');
+
+if (fs.existsSync(contentLibraryPath)) {
+  contentCatalog = JSON.parse(fs.readFileSync(contentLibraryPath, 'utf-8'));
+} else if (fs.existsSync(contentPath)) {
+  contentCatalog = JSON.parse(fs.readFileSync(contentPath, 'utf-8'));
+} else {
+  throw new Error('Content catalog not found. Please create content-library.json or content.json');
+}
 
 export interface Recommendation {
   rec_id: string;
@@ -23,57 +35,21 @@ export interface Recommendation {
 
 /**
  * Generate personalized rationale for a recommendation
+ * Uses AI (GPT-4o-mini) if available, falls back to template-based rationale
+ * @param userId - The user ID
  * @param recommendation - The recommendation content
  * @param signals - User's behavioral signals
  * @param accountInfo - Account information (for credit card recommendations)
  * @returns Personalized rationale string
  */
-function generateRationale(
+async function generateRationale(
+  userId: string,
   recommendation: any,
   signals: any,
   accountInfo?: { last4?: string; accountType?: string }
-): string {
-  const utilization = signals.utilization;
-  const interestCharges = signals.interestCharges;
-  const minPaymentOnly = signals.minimum_payment_only;
-
-  // Generate rationale based on recommendation type
-  if (recommendation.id === 'edu-001') {
-    // Credit Utilization article
-    if (utilization && utilization.utilization) {
-      return `We noticed your ${accountInfo?.accountType || 'credit card'} ending in ${accountInfo?.last4 || '****'} is at ${utilization.utilization.toFixed(1)}% utilization ($${utilization.balance.toLocaleString()} of $${utilization.limit.toLocaleString()} limit). Understanding how utilization affects your credit score could help you improve it and reduce interest charges.`;
-    }
-    return 'Understanding credit utilization is key to improving your credit score and reducing interest charges.';
-  }
-
-  if (recommendation.id === 'edu-002') {
-    // Debt payoff strategies
-    if (interestCharges && interestCharges.totalCharges > 0) {
-      return `You're currently paying approximately $${interestCharges.monthlyAverage.toFixed(2)} per month in interest charges. Learning about debt payoff strategies could help you save money and pay off your debt faster.`;
-    }
-    return 'Understanding different debt payoff strategies can help you choose the approach that works best for your situation.';
-  }
-
-  if (recommendation.id === 'edu-003') {
-    // Autopay setup
-    if (minPaymentOnly) {
-      return `Since you're currently making minimum payments only, setting up autopay could help ensure you never miss a payment and avoid late fees that could further impact your credit score.`;
-    }
-    return 'Setting up autopay ensures you never miss a payment and helps you avoid costly late fees.';
-  }
-
-  if (recommendation.id === 'offer-001') {
-    // Balance transfer card
-    if (utilization && utilization.utilization >= 50) {
-      const potentialSavings = interestCharges?.monthlyAverage ? 
-        (interestCharges.monthlyAverage * 18).toFixed(0) : '500+';
-      return `With your current ${utilization.utilization.toFixed(1)}% utilization and interest charges of $${interestCharges?.monthlyAverage.toFixed(2) || '0'} per month, a balance transfer card with 0% APR could save you approximately $${potentialSavings} in interest over 18 months.`;
-    }
-    return 'A balance transfer card with 0% introductory APR could help you save on interest charges while you pay down your debt.';
-  }
-
-  // Default rationale
-  return `This recommendation is tailored to your financial situation and could help you improve your financial health.`;
+): Promise<string> {
+  // Use AI rationale generator (with fallback to template)
+  return await generateAIRationale(userId, recommendation, signals, accountInfo);
 }
 
 /**
@@ -137,7 +113,7 @@ export async function generateRecommendations(userId: string): Promise<Recommend
   // Generate education recommendations
   if (personaContent.education) {
     for (const eduItem of personaContent.education) {
-      const rationale = generateRationale(eduItem, signals, accountInfo);
+      const rationale = await generateRationale(userId, eduItem, signals, accountInfo);
       
       recommendations.push({
         rec_id: `rec-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -151,10 +127,13 @@ export async function generateRecommendations(userId: string): Promise<Recommend
     }
   }
 
-  // Generate partner offer recommendations
+  // Generate partner offer recommendations (filter by eligibility)
   if (personaContent.partner_offers) {
-    for (const offer of personaContent.partner_offers) {
-      const rationale = generateRationale(offer, signals, accountInfo);
+    // Filter offers by eligibility
+    const eligibleOffers = await filterEligibleOffers(userId, personaContent.partner_offers);
+    
+    for (const offer of eligibleOffers) {
+      const rationale = await generateRationale(userId, offer, signals, accountInfo);
       
       recommendations.push({
         rec_id: `rec-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -197,19 +176,19 @@ export async function storeRecommendations(recommendations: Recommendation[]): P
 
 /**
  * Get recommendations for a user
- * Deduplicates recommendations by content title to prevent duplicates
+ * Deduplicates recommendations by content title, then ranks by priority
  * @param userId - The user ID
- * @param limit - Maximum number of recommendations to return (default: 10)
- * @returns Array of unique recommendations
+ * @param limit - Maximum number of recommendations to return (default: 5)
+ * @returns Array of unique, ranked recommendations
  */
-export async function getRecommendations(userId: string, limit: number = 10): Promise<Recommendation[]> {
+export async function getRecommendations(userId: string, limit: number = 5): Promise<Recommendation[]> {
   const rows = await all<Recommendation>(
     `SELECT rec_id, user_id, persona_id, type, content, rationale, impact_estimate, created_at
      FROM recommendations
      WHERE user_id = ?
      ORDER BY created_at DESC
      LIMIT ?`,
-    [userId, limit * 2] // Get more to account for deduplication
+    [userId, limit * 3] // Get more to account for deduplication and ranking
   );
 
   // Deduplicate by content title (extract title from content string)
@@ -226,14 +205,12 @@ export async function getRecommendations(userId: string, limit: number = 10): Pr
     if (!seen.has(key)) {
       seen.add(key);
       unique.push(rec);
-      
-      // Stop when we have enough unique recommendations
-      if (unique.length >= limit) {
-        break;
-      }
     }
   }
 
-  return unique;
+  // Rank recommendations by impact and urgency
+  const ranked = await rankRecommendations(userId, unique, limit);
+
+  return ranked;
 }
 

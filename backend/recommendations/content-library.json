@@ -1,0 +1,347 @@
+{
+  "high_utilization": {
+    "education": [
+      {
+        "id": "edu-hu-001",
+        "title": "Understanding Credit Utilization and Your Score",
+        "description": "Learn how credit utilization affects your credit score and strategies to improve it. Discover the 30% rule and how paying down balances can boost your score.",
+        "url": "https://example.com/articles/credit-utilization",
+        "estimatedReadTime": "5 min",
+        "category": "credit_education",
+        "tags": ["credit_score", "utilization", "basics"]
+      },
+      {
+        "id": "edu-hu-002",
+        "title": "Debt Avalanche vs Snowball: Which is Right for You?",
+        "description": "Compare two popular debt payoff strategies and choose the one that fits your situation. Learn when to prioritize high interest vs. quick wins.",
+        "url": "https://example.com/guides/debt-strategies",
+        "estimatedReadTime": "8 min",
+        "category": "debt_management",
+        "tags": ["debt_payoff", "strategy", "planning"]
+      },
+      {
+        "id": "edu-hu-003",
+        "title": "Setting Up Autopay to Avoid Late Fees",
+        "description": "Step-by-step guide to setting up automatic payments and avoiding costly late fees. Protect your credit score and save money on penalties.",
+        "url": "https://example.com/tutorials/autopay-setup",
+        "estimatedReadTime": "3 min",
+        "category": "payment_automation",
+        "tags": ["autopay", "late_fees", "automation"]
+      },
+      {
+        "id": "edu-hu-004",
+        "title": "How to Negotiate Lower Interest Rates",
+        "description": "Practical tips for calling your credit card company to request lower APRs. Learn what to say and when to call for the best results.",
+        "url": "https://example.com/articles/negotiate-rates",
+        "estimatedReadTime": "6 min",
+        "category": "credit_optimization",
+        "tags": ["negotiation", "interest_rates", "savings"]
+      }
+    ],
+    "partner_offers": [
+      {
+        "id": "offer-hu-001",
+        "title": "Chase Slate Edge - Balance Transfer Card",
+        "description": "0% APR for 18 months on balance transfers, $0 transfer fee for first 60 days. Perfect for consolidating high-interest debt.",
+        "url": "https://example.com/offers/chase-slate-edge",
+        "type": "balance_transfer_card",
+        "eligibility": {
+          "minCreditScore": 670,
+          "maxUtilization": 100,
+          "excludeExisting": ["chase"]
+        },
+        "impact": "Could save up to $500+ in interest charges over 18 months"
+      },
+      {
+        "id": "offer-hu-002",
+        "title": "Citi Diamond Preferred - Balance Transfer Card",
+        "description": "0% APR for 21 months on balance transfers. Longer promotional period for larger debt consolidation.",
+        "url": "https://example.com/offers/citi-diamond",
+        "type": "balance_transfer_card",
+        "eligibility": {
+          "minCreditScore": 680,
+          "maxUtilization": 100,
+          "excludeExisting": ["citi"]
+        },
+        "impact": "Could save up to $750+ in interest charges over 21 months"
+      }
+    ]
+  },
+  "variable_income": {
+    "education": [
+      {
+        "id": "edu-vi-001",
+        "title": "Budgeting with Irregular Income",
+        "description": "Learn the 50/30/20 rule adapted for variable income. Discover how to create a flexible budget that works with fluctuating paychecks.",
+        "url": "https://example.com/articles/variable-income-budgeting",
+        "estimatedReadTime": "7 min",
+        "category": "budgeting",
+        "tags": ["budgeting", "variable_income", "planning"]
+      },
+      {
+        "id": "edu-vi-002",
+        "title": "Building an Emergency Fund on Variable Pay",
+        "description": "Strategies for building a 3-6 month emergency fund when your income varies. Learn to save during high-earning months.",
+        "url": "https://example.com/guides/emergency-fund-variable",
+        "estimatedReadTime": "6 min",
+        "category": "emergency_fund",
+        "tags": ["emergency_fund", "savings", "security"]
+      },
+      {
+        "id": "edu-vi-003",
+        "title": "Income Smoothing Strategies",
+        "description": "Techniques to smooth out income fluctuations, including setting aside money in high months and creating a buffer account.",
+        "url": "https://example.com/articles/income-smoothing",
+        "estimatedReadTime": "5 min",
+        "category": "cash_flow",
+        "tags": ["cash_flow", "income_management", "stability"]
+      },
+      {
+        "id": "edu-vi-004",
+        "title": "Managing Cash Flow Gaps",
+        "description": "How to handle periods between paychecks when income is delayed. Learn about short-term solutions and long-term planning.",
+        "url": "https://example.com/guides/cash-flow-gaps",
+        "estimatedReadTime": "4 min",
+        "category": "cash_flow",
+        "tags": ["cash_flow", "gaps", "planning"]
+      }
+    ],
+    "partner_offers": [
+      {
+        "id": "offer-vi-001",
+        "title": "YNAB (You Need A Budget)",
+        "description": "Budgeting app designed for variable income. Helps you plan ahead and build buffers for lean months.",
+        "url": "https://example.com/offers/ynab",
+        "type": "budgeting_app",
+        "eligibility": {
+          "persona": "variable_income"
+        },
+        "impact": "Better cash flow management and reduced financial stress"
+      },
+      {
+        "id": "offer-vi-002",
+        "title": "EveryDollar Budgeting App",
+        "description": "Zero-based budgeting app perfect for tracking irregular income. Free version available with premium features.",
+        "url": "https://example.com/offers/everydollar",
+        "type": "budgeting_app",
+        "eligibility": {
+          "persona": "variable_income"
+        },
+        "impact": "Improved budget visibility and planning"
+      }
+    ]
+  },
+  "subscription_heavy": {
+    "education": [
+      {
+        "id": "edu-sh-001",
+        "title": "The Complete Subscription Audit Checklist",
+        "description": "Step-by-step guide to reviewing all your subscriptions. Learn how to identify forgotten services and evaluate value.",
+        "url": "https://example.com/articles/subscription-audit",
+        "estimatedReadTime": "5 min",
+        "category": "subscription_management",
+        "tags": ["subscriptions", "audit", "review"]
+      },
+      {
+        "id": "edu-sh-002",
+        "title": "How to Negotiate or Cancel Subscriptions",
+        "description": "Practical tips for canceling subscriptions and negotiating better rates. Learn when to cancel vs. when to negotiate.",
+        "url": "https://example.com/guides/cancel-subscriptions",
+        "estimatedReadTime": "4 min",
+        "category": "subscription_management",
+        "tags": ["subscriptions", "cancellation", "negotiation"]
+      },
+      {
+        "id": "edu-sh-003",
+        "title": "Setting Up Bill Alerts and Reminders",
+        "description": "How to set up automated reminders for subscription renewals and avoid surprise charges. Use calendar and banking alerts.",
+        "url": "https://example.com/tutorials/bill-alerts",
+        "estimatedReadTime": "3 min",
+        "category": "payment_automation",
+        "tags": ["alerts", "reminders", "automation"]
+      },
+      {
+        "id": "edu-sh-004",
+        "title": "Bundling Services to Save Money",
+        "description": "Learn how to bundle similar services (streaming, cloud storage) to reduce costs. Compare bundle options vs. individual subscriptions.",
+        "url": "https://example.com/articles/service-bundling",
+        "estimatedReadTime": "6 min",
+        "category": "cost_optimization",
+        "tags": ["bundling", "savings", "optimization"]
+      }
+    ],
+    "partner_offers": [
+      {
+        "id": "offer-sh-001",
+        "title": "Rocket Money - Subscription Manager",
+        "description": "Automatically tracks and manages your subscriptions. Helps you cancel unused services and negotiate better rates.",
+        "url": "https://example.com/offers/rocket-money",
+        "type": "subscription_manager",
+        "eligibility": {
+          "minSubscriptions": 3
+        },
+        "impact": "Could save $50-200/month by identifying and canceling unused subscriptions"
+      },
+      {
+        "id": "offer-sh-002",
+        "title": "Truebill - Subscription Tracking",
+        "description": "Monitors your subscriptions and alerts you to price increases. Can help cancel services and get refunds.",
+        "url": "https://example.com/offers/truebill",
+        "type": "subscription_manager",
+        "eligibility": {
+          "minSubscriptions": 3
+        },
+        "impact": "Could save $30-150/month by managing subscriptions more effectively"
+      }
+    ]
+  },
+  "savings_builder": {
+    "education": [
+      {
+        "id": "edu-sb-001",
+        "title": "Setting SMART Financial Goals",
+        "description": "Learn to set Specific, Measurable, Achievable, Relevant, and Time-bound financial goals. Create a roadmap for your savings journey.",
+        "url": "https://example.com/articles/smart-goals",
+        "estimatedReadTime": "6 min",
+        "category": "goal_setting",
+        "tags": ["goals", "planning", "savings"]
+      },
+      {
+        "id": "edu-sb-002",
+        "title": "Automating Your Savings",
+        "description": "Set up automatic transfers to build savings effortlessly. Learn about pay-yourself-first strategies and savings automation tools.",
+        "url": "https://example.com/guides/automate-savings",
+        "estimatedReadTime": "4 min",
+        "category": "savings_automation",
+        "tags": ["automation", "savings", "habits"]
+      },
+      {
+        "id": "edu-sb-003",
+        "title": "High-Yield Savings Accounts Explained",
+        "description": "Understanding high-yield savings accounts (HYSAs) and how they can boost your savings growth. Compare rates and features.",
+        "url": "https://example.com/articles/high-yield-savings",
+        "estimatedReadTime": "5 min",
+        "category": "savings_optimization",
+        "tags": ["hysa", "savings", "interest_rates"]
+      },
+      {
+        "id": "edu-sb-004",
+        "title": "Introduction to CDs and Bonds",
+        "description": "Learn about certificates of deposit (CDs) and bonds as options for growing your savings. Understand risk, return, and liquidity trade-offs.",
+        "url": "https://example.com/guides/cds-bonds",
+        "estimatedReadTime": "7 min",
+        "category": "investment_basics",
+        "tags": ["cds", "bonds", "savings_growth"]
+      },
+      {
+        "id": "edu-sb-005",
+        "title": "Building an Emergency Fund: How Much is Enough?",
+        "description": "Determine the right emergency fund size for your situation. Learn when 3 months is enough vs. when you need 6+ months.",
+        "url": "https://example.com/articles/emergency-fund-size",
+        "estimatedReadTime": "5 min",
+        "category": "emergency_fund",
+        "tags": ["emergency_fund", "planning", "security"]
+      }
+    ],
+    "partner_offers": [
+      {
+        "id": "offer-sb-001",
+        "title": "Marcus by Goldman Sachs - High-Yield Savings",
+        "description": "4.40% APY with no minimum balance. FDIC insured up to $250,000. Perfect for growing your emergency fund.",
+        "url": "https://example.com/offers/marcus-hysa",
+        "type": "high_yield_savings",
+        "eligibility": {
+          "excludeExisting": ["marcus", "high_yield_savings"],
+          "minBalance": 0
+        },
+        "impact": "Could earn $200-500+ more in interest per year compared to traditional savings"
+      },
+      {
+        "id": "offer-sb-002",
+        "title": "Ally Bank - High-Yield Savings Account",
+        "description": "4.35% APY with no monthly maintenance fees. Easy online access and mobile app for managing your savings.",
+        "url": "https://example.com/offers/ally-hysa",
+        "type": "high_yield_savings",
+        "eligibility": {
+          "excludeExisting": ["ally", "high_yield_savings"],
+          "minBalance": 0
+        },
+        "impact": "Could earn $150-400+ more in interest per year compared to traditional savings"
+      }
+    ]
+  },
+  "lifestyle_creep": {
+    "education": [
+      {
+        "id": "edu-lc-001",
+        "title": "Understanding Opportunity Cost",
+        "description": "Learn how every spending decision has an opportunity cost. See how small daily expenses add up to significant lost savings potential.",
+        "url": "https://example.com/articles/opportunity-cost",
+        "estimatedReadTime": "6 min",
+        "category": "financial_literacy",
+        "tags": ["opportunity_cost", "spending", "planning"]
+      },
+      {
+        "id": "edu-lc-002",
+        "title": "Retirement Savings Gap Calculator",
+        "description": "Calculate how much you need to save for retirement and identify any gaps. Learn about retirement savings benchmarks by age.",
+        "url": "https://example.com/tools/retirement-gap",
+        "estimatedReadTime": "8 min",
+        "category": "retirement_planning",
+        "tags": ["retirement", "planning", "calculators"]
+      },
+      {
+        "id": "edu-lc-003",
+        "title": "Tax-Advantaged Account Guide (401k, IRA, HSA)",
+        "description": "Comprehensive guide to 401(k)s, IRAs, and HSAs. Learn how to maximize tax benefits and grow wealth faster.",
+        "url": "https://example.com/guides/tax-advantaged-accounts",
+        "estimatedReadTime": "10 min",
+        "category": "retirement_planning",
+        "tags": ["401k", "ira", "hsa", "tax_benefits"]
+      },
+      {
+        "id": "edu-lc-004",
+        "title": "Building Wealth on a High Income",
+        "description": "Strategies for high earners to build wealth effectively. Learn about investment strategies, tax optimization, and wealth preservation.",
+        "url": "https://example.com/articles/high-income-wealth",
+        "estimatedReadTime": "7 min",
+        "category": "wealth_building",
+        "tags": ["wealth_building", "investing", "high_income"]
+      },
+      {
+        "id": "edu-lc-005",
+        "title": "The 20% Savings Rule for High Earners",
+        "description": "Why saving 20% of income is crucial for high earners. Learn how to redirect discretionary spending to wealth-building.",
+        "url": "https://example.com/articles/20-percent-rule",
+        "estimatedReadTime": "5 min",
+        "category": "savings_rate",
+        "tags": ["savings_rate", "planning", "wealth_building"]
+      }
+    ],
+    "partner_offers": [
+      {
+        "id": "offer-lc-001",
+        "title": "Fidelity - Investment Account",
+        "description": "Low-cost investment platform with comprehensive retirement planning tools. Perfect for maximizing tax-advantaged savings.",
+        "url": "https://example.com/offers/fidelity",
+        "type": "investment_platform",
+        "eligibility": {
+          "minIncome": 75000
+        },
+        "impact": "Could save thousands in fees and optimize retirement contributions"
+      },
+      {
+        "id": "offer-lc-002",
+        "title": "Vanguard - Low-Cost Index Funds",
+        "description": "Access to low-cost index funds and ETFs. Ideal for long-term wealth building with minimal fees.",
+        "url": "https://example.com/offers/vanguard",
+        "type": "investment_platform",
+        "eligibility": {
+          "minIncome": 75000
+        },
+        "impact": "Could save $500-2000+ annually in fees compared to high-cost funds"
+      }
+    ]
+  }
+}
+

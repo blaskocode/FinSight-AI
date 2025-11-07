@@ -281,9 +281,28 @@ export function Dashboard() {
           )}
 
           <div className="space-y-4">
-            {recommendations.map((rec) => (
-              <RecommendationCard key={rec.id} recommendation={rec} />
-            ))}
+            {recommendations.map((rec, index) => {
+              // Determine priority based on position (top recommendations are higher priority)
+              const priority: 'critical' | 'high' | 'medium' | 'low' = 
+                index === 0 ? 'critical' : 
+                index === 1 ? 'high' : 
+                index === 2 ? 'medium' : 'low';
+              
+              // Determine difficulty (simplified - would come from backend in real app)
+              const difficulty: 'quick_win' | 'moderate' | 'long_term' = 
+                rec.type === 'partner_offer' ? 'quick_win' : 
+                rec.title?.toLowerCase().includes('payment plan') ? 'moderate' : 'long_term';
+              
+              return (
+                <RecommendationCard 
+                  key={rec.id} 
+                  recommendation={rec} 
+                  priority={priority}
+                  difficulty={difficulty}
+                  userId={userId || null}
+                />
+              );
+            })}
           </div>
         </div>
       </main>

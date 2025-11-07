@@ -121,3 +121,60 @@ export async function fetchRecommendations(userId: string): Promise<Recommendati
   return response.data;
 }
 
+// Payment Plan Types
+export interface DebtPayment {
+  liabilityId: string;
+  accountId: string;
+  accountName?: string;
+  type: string;
+  balance: number;
+  apr: number;
+  monthlyPayment: number;
+  payoffMonth: number;
+  totalInterest: number;
+  totalPaid: number;
+}
+
+export interface MonthPayment {
+  month: number;
+  date: string;
+  totalPayment: number;
+  debts: {
+    liabilityId: string;
+    payment: number;
+    remainingBalance: number;
+  }[];
+}
+
+export interface PaymentPlan {
+  strategy: 'avalanche' | 'snowball';
+  debts: DebtPayment[];
+  totalDebt: number;
+  totalInterest: number;
+  totalInterestSaved: number;
+  payoffMonths: number;
+  monthlySurplus: number;
+  timeline: MonthPayment[];
+}
+
+export interface PaymentPlanComparison {
+  avalanche: PaymentPlan;
+  snowball: PaymentPlan;
+}
+
+/**
+ * Fetch payment plan for a user
+ */
+export async function fetchPaymentPlan(userId: string, strategy: 'avalanche' | 'snowball' = 'avalanche'): Promise<PaymentPlan> {
+  const response = await api.get<PaymentPlan>(`/payment-plan/${userId}?strategy=${strategy}`);
+  return response.data;
+}
+
+/**
+ * Fetch payment plan comparison (both strategies)
+ */
+export async function fetchPaymentPlanComparison(userId: string): Promise<PaymentPlanComparison> {
+  const response = await api.get<PaymentPlanComparison>(`/payment-plan/${userId}/compare`);
+  return response.data;
+}
+

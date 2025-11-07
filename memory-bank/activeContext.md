@@ -2,8 +2,8 @@
 
 ## Current Work Focus
 
-### Phase: Phase 1 - COMPLETE ✅
-**Status**: Phase 1 complete! All 6 PRs finished (PR-10 through PR-15). Ready to continue with Phase 2.
+### Phase: Phase 2 Complete ✅
+**Status**: All Phase 2 PRs complete (PR-16 through PR-21)! Ready to continue with Phase 3.
 
 ### Completed (PR-1)
 - ✅ Monorepo structure created
@@ -173,7 +173,111 @@
 - ✅ All files under 750 line limit
 - ✅ Build successful, no TypeScript errors
 
-### Current State - Phase 1 Complete, Phase 2 Ready
+### Completed (PR-16) - Content Catalog & Education Library
+- ✅ Created `backend/recommendations/content-library.json` (347 lines) with comprehensive content for all 5 personas
+- ✅ Total content: 22 education items + 10 partner offers
+  - High Utilization: 4 education items, 2 partner offers
+  - Variable Income: 4 education items, 2 partner offers
+  - Subscription Heavy: 4 education items, 2 partner offers
+  - Savings Builder: 5 education items, 2 partner offers
+  - Lifestyle Creep: 5 education items, 2 partner offers
+- ✅ Each education item includes: id, title, description, url, estimatedReadTime, category, tags
+- ✅ Each partner offer includes: id, title, description, url, type, eligibility, impact
+- ✅ Updated `engine.ts` to prefer `content-library.json` with fallback to `content.json` for backward compatibility
+- ✅ All personas have comprehensive, persona-specific content coverage
+
+### Completed (PR-17) - Partner Offer Catalog with Eligibility
+- ✅ Created `backend/recommendations/eligibility.ts` (355 lines) with comprehensive eligibility checking:
+  - Credit score estimation (based on utilization and payment history, 500-850 range)
+  - Income estimation (from transaction history, fallback to persona signals)
+  - Existing account detection (prevents duplicates by provider/type)
+  - Credit utilization checking (max utilization across all credit accounts)
+  - Persona matching (for persona-specific offers)
+  - Subscription count checking (for subscription management offers)
+  - Account type exclusion (prevents duplicate account types like HYSA)
+- ✅ Blacklist system for predatory products:
+  - Payday loans, cash advance apps
+  - High-fee products (check cashing, rent-to-own)
+  - Predatory credit repair services
+- ✅ Updated `engine.ts` to filter partner offers by eligibility before generating recommendations
+- ✅ All eligibility checks are async and database-backed
+- ✅ File under 750 line limit
+
+### Completed (PR-18) - Recommendation Ranking & Prioritization
+- ✅ Created `backend/recommendations/ranker.ts` (378 lines) with comprehensive ranking system:
+  - Impact scoring for all 5 personas:
+    - High Utilization: Potential interest savings (interest charges * months to pay off)
+    - Variable Income: Months until 3-month emergency fund reached
+    - Subscription Heavy: Monthly recurring spend and subscription share
+    - Savings Builder: Additional interest earned with HYSA (APY difference)
+    - Lifestyle Creep: Retirement savings shortfall vs. recommended 20% rate
+  - Urgency scoring based on financial situation:
+    - Overdue status = 100 (critical)
+    - High utilization (≥80%) = 90
+    - Low emergency fund (<1 month) = 85
+    - Low cash flow buffer (<0.5 months) = 80
+    - Other = 30-70 (medium/low)
+  - Priority score = (impact * 0.6) + (urgency * 0.4)
+  - Recommendations sorted by priority score (descending)
+- ✅ Updated `engine.ts` to use ranking system in `getRecommendations`
+- ✅ Default limit changed from 10 to 5 recommendations (top priority)
+- ✅ All ranking calculations are async and database-backed
+- ✅ File under 750 line limit
+
+### Completed (PR-19) - Rationale Generator with GPT-4o-mini
+- ✅ Created `backend/ai/rationaleGenerator.ts` (327 lines) with comprehensive AI rationale generation:
+  - OpenAI SDK integration with GPT-4o-mini
+  - Structured prompt template with user data, persona, signals, and recommendation details
+  - Tone validation (checks for harmful phrases like "you should be ashamed", "you're terrible", etc.)
+  - Fallback to template-based rationales if API fails or tone validation fails
+  - Caching system using `chat_cache` table (30 days for AI, 7 days for fallback)
+  - Cache key generation based on userId, recommendationId, personaType, and signals hash
+- ✅ Updated `engine.ts` to use AI rationale generator (with fallback)
+- ✅ All rationale generation is async and database-backed
+- ✅ File under 750 line limit
+- ✅ Security review: API key from environment, input validation, tone validation, error handling
+
+### Completed (PR-20) - Debt Payment Plan Generator
+- ✅ Created `backend/recommendations/paymentPlanner.ts` (438 lines) with comprehensive payment plan generation:
+  - `calculateAvailableCashFlow`: Calculates available cash flow from income, expenses, minimum payments, and 20% safety buffer
+  - `generatePaymentPlan`: Generates payment plans for both avalanche and snowball strategies
+  - `generatePaymentPlansComparison`: Generates both strategies for comparison
+  - Payment plan includes: monthly payments per debt, payoff dates, total interest, total interest saved, timeline data
+  - Timeline includes month-by-month payment schedule for visualization
+- ✅ Added API endpoints:
+  - `GET /api/payment-plan/:user_id?strategy=avalanche|snowball` - Generate single payment plan
+  - `GET /api/payment-plan/:user_id/compare` - Generate both strategies for comparison
+- ✅ All payment plan calculations are async and database-backed
+- ✅ File under 750 line limit
+- ✅ Security review: All database queries use parameterized statements, input validation, financial calculations validated
+
+### Completed (PR-21) - Frontend - Recommendation Cards & Details
+- ✅ Enhanced `RecommendationCard.tsx` (176 lines) with:
+  - Priority badges (Critical/High/Medium/Low) with color coding
+  - Impact estimate display with trending icon
+  - Difficulty level badges (Quick Win/Moderate/Long-term) with icons
+  - Progressive disclosure (expand/collapse details)
+  - Context-aware CTAs (View Payment Plan, Learn More, Apply Now)
+  - Integration with PaymentPlanModal and PartnerOfferCard
+- ✅ Created `PaymentPlanModal.tsx` (230 lines) with:
+  - Strategy toggle (Avalanche vs Snowball)
+  - Payoff timeline chart using Recharts
+  - Summary cards (Total Debt, Interest Saved, Payoff Time, Monthly Surplus)
+  - Month-by-month payment schedule with debt details
+  - Loading and error states
+- ✅ Created `PartnerOfferCard.tsx` (78 lines) with:
+  - Eligibility status display
+  - Offer details and impact estimate
+  - "Apply Now" CTA button
+  - Educational disclaimer
+- ✅ Added API service methods:
+  - `fetchPaymentPlan(userId, strategy)` - Get single payment plan
+  - `fetchPaymentPlanComparison(userId)` - Get both strategies for comparison
+- ✅ Updated Dashboard to pass priority and difficulty to RecommendationCard
+- ✅ All components under 750 line limit
+- ✅ Responsive design with Tailwind CSS
+
+### Current State - Phase 1 Complete, Phase 2 Complete ✅
 - **Backend**: Express server with health check, profile, recommendations, and consent endpoints
 - **Frontend**: ✅ Complete polished dashboard with consent screen, persona display, signals visualization, recommendations, error handling, and disclaimers
 - **Database**: ✅ SQLite database initialized with complete schema (9 tables, indexes, foreign keys)
@@ -326,22 +430,31 @@
 
 1. **MVP Complete** ✅ - All 9 PRs finished (PR-1 through PR-9)
 2. **Phase 1 Complete** ✅ - All 6 PRs finished (PR-10 through PR-15)
-3. **Phase 2 - PR-16**: Content Catalog & Education Library ⏳ NEXT
-   - Create comprehensive content catalog
-   - Structure content by persona and category
-   - Create content for each persona (3-5 items each)
+3. **Phase 2 Complete** ✅ - All 6 PRs finished (PR-16 through PR-21):
+   - PR-16: Content catalog with 22 education items and 10 partner offers for all 5 personas
+   - PR-17: Eligibility checking system with comprehensive filtering for all partner offers
+   - PR-18: Recommendation ranking system with impact and urgency scoring
+   - PR-19: AI rationale generator with GPT-4o-mini, tone validation, and caching
+   - PR-20: Debt payment plan generator with avalanche and snowball strategies
+   - PR-21: Frontend recommendation cards with priority badges, payment plan modal, and partner offer cards
+4. **Phase 3 - PR-22**: AI Chat Backend - Core Infrastructure ⏳ NEXT
+   - Create chat service module
+   - Setup OpenAI SDK for streaming responses
+   - Implement conversation context management
 
 ## Blockers & Dependencies
 
 ### Current Blockers
-- None - PR-15 complete! Ready to proceed with PR-16
+- None - Phase 2 complete! Ready to proceed with Phase 3 (PR-22)
 
 ### Recent Updates
-- **PR-15 Complete**: All personas now have distinct visual identities with:
-  - Color-coded badges and icons for each persona
-  - Secondary personas displayed as tags
-  - Comprehensive behavioral signals display
-  - Persona-specific descriptions and focus areas
+- **Phase 2 Complete**: All 6 PRs finished (PR-16 through PR-21):
+  - PR-16: Content catalog with 22 education items and 10 partner offers
+  - PR-17: Eligibility checking system with comprehensive filtering
+  - PR-18: Recommendation ranking system with impact and urgency scoring
+  - PR-19: AI rationale generator with GPT-4o-mini, tone validation, and caching
+  - PR-20: Debt payment plan generator with avalanche and snowball strategies
+  - PR-21: Frontend recommendation cards with priority badges, payment plan modal, and partner offer cards
 
 ### Dependencies
 - ✅ **MVP COMPLETE** - All 9 PRs finished!
