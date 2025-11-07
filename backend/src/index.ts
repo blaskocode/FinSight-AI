@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { assignHighUtilizationPersona, storePersonaAssignment, getCurrentPersona } from '../personas/assignPersona';
+import { assignPersona, storePersonaAssignment, getCurrentPersona } from '../personas/assignPersona';
 import { generateRecommendations, storeRecommendations, getRecommendations } from '../recommendations/engine';
 import { recordConsent, revokeConsent, getConsentRecord } from '../guardrails/consent';
 import { requireConsent } from '../middleware/requireConsent';
@@ -95,16 +95,17 @@ app.get('/api/profile/:user_id', requireConsent, async (req: Request, res: Respo
 
     // If no persona assigned or we want to recalculate, assign persona
     if (!currentPersona) {
-      const assignment = await assignHighUtilizationPersona(userId);
+      const result = await assignPersona(userId);
       
-      if (assignment) {
-        // Store the assignment
-        const personaId = await storePersonaAssignment(userId, assignment);
+      if (result) {
+        // Store the assignment with secondary personas
+        const secondaryPersonaTypes = result.secondary.map(p => p.personaType);
+        const personaId = await storePersonaAssignment(userId, result.primary, secondaryPersonaTypes);
         
         // Get the stored persona
         currentPersona = await getCurrentPersona(userId);
       } else {
-        // No persona matches (shouldn't happen for MVP with only High Utilization)
+        // No persona matches
         return res.json({
           user_id: userId,
           persona: null,
@@ -126,14 +127,10 @@ app.get('/api/profile/:user_id', requireConsent, async (req: Request, res: Respo
         type: currentPersona.persona_type,
         assigned_at: currentPersona.assigned_at,
         confidence: currentPersona.signals.confidence,
-        criteria_met: currentPersona.signals.criteriaMet
+        criteria_met: currentPersona.signals.criteriaMet,
+        secondary_personas: currentPersona.secondary_personas || []
       },
-      signals: {
-        utilization: currentPersona.signals.utilization,
-        minimum_payment_only: currentPersona.signals.minimumPaymentOnly,
-        interest_charges: currentPersona.signals.interestCharges,
-        is_overdue: currentPersona.signals.isOverdue
-      }
+      signals: currentPersona.signals
     });
 
   } catch (error: any) {

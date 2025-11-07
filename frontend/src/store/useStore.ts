@@ -3,7 +3,7 @@
 
 import { create } from 'zustand';
 import { submitConsent, fetchProfile, fetchRecommendations } from '../services/api';
-import type { ProfileResponse, RecommendationsResponse, Recommendation } from '../services/api';
+import type { ProfileResponse, Recommendation } from '../services/api';
 
 interface UserState {
   userId: string | null;
@@ -39,7 +39,7 @@ const initialState: UserState = {
   error: null,
 };
 
-export const useStore = create<UserState & UserActions>((set, get) => ({
+export const useStore = create<UserState & UserActions>((set) => ({
   ...initialState,
 
   setUserId: (userId: string) => set({ userId }),

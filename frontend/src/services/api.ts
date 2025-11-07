@@ -32,22 +32,49 @@ export interface ProfileResponse {
     assigned_at: string;
     confidence: number;
     criteria_met: string[];
+    secondary_personas?: string[];
   };
   signals: {
+    // Credit signals
     utilization?: {
       utilization: number;
-      balance: number;
-      limit: number;
-      threshold: string;
-      isHighUtilization: boolean;
-    };
+      balance?: number;
+      limit?: number;
+      threshold?: string;
+      isHighUtilization?: boolean;
+    } | number;
     minimum_payment_only?: boolean;
     interest_charges?: {
       totalCharges: number;
-      monthlyAverage: number;
-      chargeCount: number;
+      monthlyAverage?: number;
+      chargeCount?: number;
     };
     is_overdue?: boolean;
+    // Income stability signals
+    medianPayGap?: number;
+    payGapVariability?: number;
+    cashFlowBuffer?: number;
+    paymentFrequency?: string;
+    incomeStability?: string;
+    averageIncome?: number;
+    monthlyIncome?: number;
+    // Subscription signals
+    recurringMerchants?: number;
+    monthlyRecurringSpend?: number;
+    subscriptionShare?: number;
+    totalSpend?: number;
+    // Savings signals
+    savingsGrowthRate?: number;
+    monthlyInflow?: number;
+    netSavingsInflow?: number;
+    totalSavingsBalance?: number;
+    emergencyFundCoverage?: number;
+    savingsRate?: number;
+    maxUtilization?: number;
+    // Lifestyle creep signals
+    discretionaryShare?: number;
+    monthlyDiscretionary?: number;
+    incomeThreshold?: number;
   };
 }
 
