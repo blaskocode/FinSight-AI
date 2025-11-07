@@ -63,6 +63,17 @@ export async function calculateUtilization(accountId: string): Promise<Utilizati
     };
   }
 
+  // If balance is negative (credit/overpayment), utilization is 0%
+  if (balance < 0) {
+    return {
+      utilization: 0,
+      balance,
+      limit,
+      threshold: 'low',
+      isHighUtilization: false
+    };
+  }
+
   const utilization = (balance / limit) * 100;
 
   // Determine threshold
@@ -205,16 +216,9 @@ export async function calculateInterestCharges(
     };
   }
 
-  const balances = JSON.parse(account.balances);
-  const currentBalance = balances.current || 0;
-  const apr = liability.apr_percentage;
-
-  // Estimate interest charges: (balance * APR / 100) / 12 * number of months
-  const monthsInWindow = windowDays / 30;
-  const monthlyInterest = (currentBalance * apr / 100) / 12;
-  const estimatedTotalCharges = monthlyInterest * monthsInWindow;
-
   // Look for actual interest charge transactions
+  // IMPORTANT: We only use actual transactions for persona assignment.
+  // Estimation should only be used for future projections, not historical analysis.
   const interestTransactions = await all<{
     amount: number;
   }>(
@@ -223,20 +227,19 @@ export async function calculateInterestCharges(
      WHERE account_id = ? 
        AND (merchant_name LIKE '%interest%' 
             OR merchant_name LIKE '%Interest%'
+            OR merchant_name LIKE '%Interest Charge%'
             OR personal_finance_category_detailed LIKE '%INTEREST%')
        AND amount < 0
        AND date >= ?`,
     [accountId, cutoffDateStr]
   );
 
-  // Use actual transactions if available, otherwise use estimate
-  let totalCharges = 0;
-  if (interestTransactions.length > 0) {
-    totalCharges = interestTransactions.reduce((sum, txn) => sum + Math.abs(txn.amount), 0);
-  } else {
-    // Use estimated charges based on APR and balance
-    totalCharges = estimatedTotalCharges;
-  }
+  // Only use actual transactions - no estimation for historical analysis
+  const totalCharges = interestTransactions.length > 0
+    ? interestTransactions.reduce((sum, txn) => sum + Math.abs(txn.amount), 0)
+    : 0;
+
+  const monthsInWindow = windowDays / 30;
 
   const monthlyAverage = monthsInWindow > 0 ? totalCharges / monthsInWindow : 0;
 

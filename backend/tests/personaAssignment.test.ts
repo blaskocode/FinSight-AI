@@ -247,6 +247,145 @@ describe('Persona Assignment', () => {
         expect(Array.isArray(result.secondary)).toBe(true);
       }
     });
+
+    it('should return null when user matches no personas', async () => {
+      // Create user with no matching criteria
+      const noMatchUserId = `test-no-match-${Date.now()}`;
+      await run(
+        'INSERT INTO users (user_id, email, name) VALUES (?, ?, ?)',
+        [noMatchUserId, 'no-match@example.com', 'No Match User']
+      );
+
+      // Create accounts with neutral characteristics
+      const checkingId = `checking-no-match-${Date.now()}`;
+      await run(
+        `INSERT INTO accounts (account_id, user_id, type, balances)
+         VALUES (?, ?, 'checking', ?)`,
+        [checkingId, noMatchUserId, JSON.stringify({ available: 1000, current: 1000 })]
+      );
+
+      const creditId = `credit-no-match-${Date.now()}`;
+      await run(
+        `INSERT INTO accounts (account_id, user_id, type, balances)
+         VALUES (?, ?, 'credit', ?)`,
+        [creditId, noMatchUserId, JSON.stringify({ available: 9000, current: 1000, limit: 10000 })] // 10% utilization
+      );
+
+      const result = await assignPersona(noMatchUserId);
+      
+      // Should return null if no personas match
+      expect(result).toBeNull();
+
+      // Cleanup
+      await run('DELETE FROM accounts WHERE account_id IN (?, ?)', [checkingId, creditId]);
+      await run('DELETE FROM users WHERE user_id = ?', [noMatchUserId]);
+    });
+
+    it('should handle user matching multiple personas with secondary assignment', async () => {
+      // Create scenario matching multiple personas
+      // High utilization (65%) + Subscription heavy (3+ subscriptions)
+      const liabilityId = `liability-multi-${Date.now()}`;
+      await run(
+        `INSERT INTO liabilities (liability_id, account_id, type, last_statement_balance, minimum_payment_amount, last_payment_amount)
+         VALUES (?, ?, 'credit_card', ?, ?, ?)`,
+        [liabilityId, testCreditId, 6500, 130, 130] // 65% utilization
+      );
+
+      // Add subscriptions
+      const baseDate = new Date();
+      baseDate.setMonth(baseDate.getMonth() - 2);
+      const subscriptions = ['Netflix', 'Spotify', 'Disney+'];
+      for (let i = 0; i < subscriptions.length; i++) {
+        for (let month = 0; month < 3; month++) {
+          const date = new Date(baseDate);
+          date.setMonth(date.getMonth() + month);
+          date.setDate(15);
+          
+          await run(
+            `INSERT INTO transactions (transaction_id, account_id, date, amount, merchant_name)
+             VALUES (?, ?, ?, ?, ?)`,
+            [
+              `tx-multi-sub-${i}-${month}`,
+              testCheckingId,
+              date.toISOString().split('T')[0],
+              -15,
+              subscriptions[i]
+            ]
+          );
+        }
+      }
+
+      const result = await assignPersona(testUserId);
+      
+      expect(result).not.toBeNull();
+      if (result) {
+        expect(result.primary).toBeDefined();
+        expect(result.primary.personaType).toBe('high_utilization'); // Should be primary (higher priority)
+        expect(Array.isArray(result.secondary)).toBe(true);
+        // Should have subscription_heavy as secondary
+        const secondaryTypes = result.secondary.map(p => p.personaType);
+        expect(secondaryTypes).toContain('subscription_heavy');
+      }
+    });
+
+    it('should prioritize higher confidence persona when High Utilization only matches on weak criteria', async () => {
+      // Create scenario where High Utilization matches only on interest charges (weak)
+      // but Savings Builder has high confidence
+      const liabilityId = `liability-weak-${Date.now()}`;
+      await run(
+        `INSERT INTO liabilities (liability_id, account_id, type, last_statement_balance, minimum_payment_amount, last_payment_amount, apr_percentage)
+         VALUES (?, ?, 'credit_card', ?, ?, ?, ?)`,
+        [liabilityId, testCreditId, 2000, 40, 40, 20.0] // 20% utilization (low), but has APR
+      );
+
+      // Add interest charge transaction (weak criteria for High Utilization)
+      const interestDate = new Date();
+      interestDate.setMonth(interestDate.getMonth() - 1);
+      await run(
+        `INSERT INTO transactions (transaction_id, account_id, date, amount, merchant_name)
+         VALUES (?, ?, ?, ?, ?)`,
+        [
+          `tx-interest-weak`,
+          testCreditId,
+          interestDate.toISOString().split('T')[0],
+          -33.33,
+          'Interest Charge'
+        ]
+      );
+
+      // Create strong Savings Builder scenario
+      const savingsBaseDate = new Date();
+      savingsBaseDate.setMonth(savingsBaseDate.getMonth() - 2);
+      for (let month = 0; month < 3; month++) {
+        const date = new Date(savingsBaseDate);
+        date.setMonth(date.getMonth() + month);
+        date.setDate(20);
+        
+        await run(
+          `INSERT INTO transactions (transaction_id, account_id, date, amount, merchant_name, personal_finance_category_detailed)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [
+            `tx-savings-strong-${month}`,
+            testCheckingId,
+            date.toISOString().split('T')[0],
+            -500, // $500/month savings
+            'Savings Transfer',
+            'SAVINGS'
+          ]
+        );
+      }
+
+      const result = await assignPersona(testUserId);
+      
+      expect(result).not.toBeNull();
+      if (result) {
+        // If Savings Builder has significantly higher confidence, it should be primary
+        // Otherwise High Utilization should be primary (priority order)
+        expect(result.primary).toBeDefined();
+        expect(['high_utilization', 'savings_builder']).toContain(result.primary.personaType);
+        expect(Array.isArray(result.secondary)).toBe(true);
+      }
+    });
   });
 
   describe('storePersonaAssignment and getCurrentPersona', () => {

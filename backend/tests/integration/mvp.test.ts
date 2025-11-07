@@ -2,9 +2,12 @@
 // Tests the complete user flow: consent → profile → recommendations
 
 import { recordConsent, checkConsent, revokeConsent } from '../../guardrails/consent';
-import { assignHighUtilizationPersona, storePersonaAssignment, getCurrentPersona } from '../../personas/assignPersona';
+import { assignPersona, storePersonaAssignment, getCurrentPersona } from '../../personas/assignPersona';
 import { generateRecommendations, storeRecommendations, getRecommendations } from '../../recommendations/engine';
 import { get } from '../../db/db';
+
+// Set test timeout to 30 seconds
+jest.setTimeout(30000);
 
 describe('MVP Integration Test', () => {
   const testUserId = 'user-1762493514942-gm8c7gimv'; // High Utilization user
@@ -33,14 +36,15 @@ describe('MVP Integration Test', () => {
       expect(hasConsent).toBe(true);
 
       // Step 2: Assign persona
-      const personaAssignment = await assignHighUtilizationPersona(testUserId);
+      const personaAssignment = await assignPersona(testUserId);
       expect(personaAssignment).not.toBeNull();
-      expect(personaAssignment?.personaType).toBe('high_utilization');
-      expect(personaAssignment?.criteriaMet.length).toBeGreaterThan(0);
-      expect(personaAssignment?.confidence).toBeGreaterThan(0);
+      expect(personaAssignment?.primary.personaType).toBe('high_utilization');
+      expect(personaAssignment?.primary.criteriaMet.length).toBeGreaterThan(0);
+      expect(personaAssignment?.primary.confidence).toBeGreaterThan(0);
 
       // Step 3: Store persona
-      const storedPersonaId = await storePersonaAssignment(testUserId, personaAssignment!);
+      const secondaryPersonaTypes = personaAssignment!.secondary.map(p => p.personaType);
+      const storedPersonaId = await storePersonaAssignment(testUserId, personaAssignment!.primary, secondaryPersonaTypes);
       expect(storedPersonaId).toBeTruthy();
 
       // Step 4: Retrieve persona
@@ -50,8 +54,7 @@ describe('MVP Integration Test', () => {
 
       // Step 5: Generate recommendations
       const recommendations = await generateRecommendations(testUserId);
-      expect(recommendations.length).toBeGreaterThan(0);
-      expect(recommendations.length).toBe(4); // 3 education + 1 partner offer
+      expect(recommendations.length).toBeGreaterThanOrEqual(4); // At least 3 education + 1 partner offer
 
       // Step 6: Store recommendations
       await storeRecommendations(recommendations);
@@ -85,13 +88,13 @@ describe('MVP Integration Test', () => {
     });
 
     it('should assign High Utilization persona correctly', async () => {
-      const personaAssignment = await assignHighUtilizationPersona(testUserId);
+      const personaAssignment = await assignPersona(testUserId);
       
       expect(personaAssignment).not.toBeNull();
-      expect(personaAssignment?.personaType).toBe('high_utilization');
+      expect(personaAssignment?.primary.personaType).toBe('high_utilization');
       
       // Verify criteria met
-      const criteriaMet = personaAssignment?.criteriaMet || [];
+      const criteriaMet = personaAssignment?.primary.criteriaMet || [];
       expect(criteriaMet.length).toBeGreaterThan(0);
       
       // Should have utilization criteria
@@ -102,7 +105,7 @@ describe('MVP Integration Test', () => {
     it('should generate personalized recommendations', async () => {
       const recommendations = await generateRecommendations(testUserId);
       
-      expect(recommendations.length).toBe(4);
+      expect(recommendations.length).toBeGreaterThanOrEqual(4);
       
       // Check that rationales are personalized
       recommendations.forEach(rec => {

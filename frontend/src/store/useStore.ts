@@ -2,8 +2,9 @@
 // Global state management for the application
 
 import { create } from 'zustand';
-import { submitConsent, fetchProfile, fetchRecommendations } from '../services/api';
-import type { ProfileResponse, Recommendation } from '../services/api';
+import { submitConsent, fetchProfile, fetchRecommendations, fetchChatMessage, getErrorMessage } from '../services/api';
+import type { ProfileResponse, Recommendation, ChatMessage } from '../services/api';
+import { toast } from '../components/Toast';
 
 interface UserState {
   userId: string | null;
@@ -13,6 +14,14 @@ interface UserState {
   recommendations: Recommendation[];
   loading: boolean;
   error: string | null;
+  // Chat state
+  chatOpen: boolean;
+  chatMessages: ChatMessage[];
+  chatLoading: boolean;
+  conversationId: string | null;
+  // Admin state
+  isAdmin: boolean;
+  currentView: 'user' | 'admin';
 }
 
 interface UserActions {
@@ -26,6 +35,13 @@ interface UserActions {
   submitConsent: (userId: string, consented: boolean) => Promise<void>;
   loadProfile: (userId: string) => Promise<void>;
   loadRecommendations: (userId: string) => Promise<void>;
+  // Chat actions
+  toggleChat: () => void;
+  sendMessage: (userId: string, message: string) => Promise<void>;
+  clearHistory: () => void;
+  // Admin actions
+  setAdmin: (isAdmin: boolean) => void;
+  setView: (view: 'user' | 'admin') => void;
   reset: () => void;
 }
 
@@ -37,6 +53,12 @@ const initialState: UserState = {
   recommendations: [],
   loading: false,
   error: null,
+  chatOpen: false,
+  chatMessages: [],
+  chatLoading: false,
+  conversationId: null,
+  isAdmin: false,
+  currentView: 'user',
 };
 
 export const useStore = create<UserState & UserActions>((set) => ({
@@ -61,11 +83,14 @@ export const useStore = create<UserState & UserActions>((set) => ({
     try {
       await submitConsent(userId, consented);
       set({ hasConsent: consented, loading: false });
+      toast.success('Consent recorded successfully');
     } catch (error: any) {
+      const errorMessage = getErrorMessage(error);
       set({
-        error: error.response?.data?.message || error.message || 'Failed to submit consent',
+        error: errorMessage,
         loading: false,
       });
+      toast.error(errorMessage);
       throw error;
     }
   },
@@ -80,8 +105,9 @@ export const useStore = create<UserState & UserActions>((set) => ({
         loading: false,
       });
     } catch (error: any) {
+      const errorMessage = getErrorMessage(error);
       set({
-        error: error.response?.data?.message || error.message || 'Failed to load profile',
+        error: errorMessage,
         loading: false,
       });
       throw error;
@@ -108,14 +134,83 @@ export const useStore = create<UserState & UserActions>((set) => ({
         recommendations: unique,
         loading: false,
       });
+      if (unique.length > 0) {
+        toast.success('Recommendations updated');
+      }
     } catch (error: any) {
+      const errorMessage = getErrorMessage(error);
       set({
-        error: error.response?.data?.message || error.message || 'Failed to load recommendations',
+        error: errorMessage,
         loading: false,
       });
       throw error;
     }
   },
+
+  toggleChat: () => set((state) => ({ chatOpen: !state.chatOpen })),
+
+  sendMessage: async (userId: string, message: string) => {
+    const state = useStore.getState();
+    
+    // Add user message immediately
+    const userMessage: ChatMessage = { role: 'user', content: message };
+    const updatedMessages = [...state.chatMessages, userMessage];
+    set({
+      chatMessages: updatedMessages,
+      chatLoading: true,
+    });
+
+    try {
+      const response = await fetchChatMessage(userId, message, state.conversationId || undefined);
+      
+      // Check if response contains an error message
+      const isErrorResponse = response.response?.toLowerCase().includes('error') || 
+                             response.response?.toLowerCase().includes('apologize') ||
+                             response.response?.toLowerCase().includes('not available');
+      
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: response.response,
+        cached: response.cached,
+        tokensUsed: response.tokensUsed,
+      };
+
+      set({
+        chatMessages: [...updatedMessages, assistantMessage],
+        chatLoading: false,
+        conversationId: response.conversationId,
+      });
+      
+      if (isErrorResponse) {
+        console.warn('Chat response indicates an error:', response.response);
+        toast.error('Unable to process your message. Please try again.');
+      } else {
+        toast.success('Chat message sent');
+      }
+    } catch (error: any) {
+      // Log error details for debugging
+      console.error('Error sending chat message:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      const errorMessageText = getErrorMessage(error);
+      const errorMessage: ChatMessage = {
+        role: 'assistant',
+        content: errorMessageText,
+      };
+      
+      set({
+        chatMessages: [...updatedMessages, errorMessage],
+        chatLoading: false,
+      });
+      toast.error(errorMessageText);
+    }
+  },
+
+  clearHistory: () => set({ chatMessages: [], conversationId: null }),
+
+  setAdmin: (isAdmin: boolean) => set({ isAdmin }),
+  setView: (view: 'user' | 'admin') => set({ currentView: view }),
 
   reset: () => set(initialState),
 }));

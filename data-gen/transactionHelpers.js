@@ -6,8 +6,8 @@
 // - No file system operations
 // - Safe for data generation purposes
 
-const { helpers } = require('./generator');
-const { generateId, random, randomFloat, getDateForDay, addDays } = helpers;
+// Import helpers directly to avoid circular dependency issues
+const { generateId, random, randomFloat, getDateForDay, addDays } = require('./generator');
 const {
   GROCERY_STORES,
   DINING_RESTAURANTS,
@@ -145,7 +145,7 @@ function generateRecurringPayments(checkingId, creditId, personaType, subscripti
     
     // Rent on 1st
     transactions.push({
-      transaction_id: require('./generator').generateId('txn-'),
+      transaction_id: generateId('txn-'),
       account_id: checkingId,
       date: monthDate,
       amount: Math.round(rentAmount * 100) / 100,
@@ -175,7 +175,7 @@ function generateRecurringPayments(checkingId, creditId, personaType, subscripti
     // Utilities (end of month)
     const utilDate = getDateForDay(start.getFullYear(), start.getMonth() + month + 1, random(25, 28));
     transactions.push({
-      transaction_id: require('./generator').generateId('txn-'),
+      transaction_id: generateId('txn-'),
       account_id: checkingId,
       date: utilDate,
       amount: -Math.round(randomFloat(100, 300) * 100) / 100,

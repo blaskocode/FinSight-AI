@@ -52,7 +52,15 @@ function randomFloat(min, max) {
   return Math.round((Math.random() * (max - min) + min) * 100) / 100;
 }
 
-// Export helpers for use in other modules
+// Export helpers for use in other modules (export directly to avoid circular dependency issues)
+module.exports.generateId = generateId;
+module.exports.random = random;
+module.exports.randomFloat = randomFloat;
+module.exports.getDateForDay = getDateForDay;
+module.exports.addDays = addDays;
+module.exports.monthsAgo = monthsAgo;
+
+// Also export as helpers object for backward compatibility
 module.exports.helpers = {
   generateId,
   random,
@@ -269,7 +277,7 @@ function generateLiability(accountId, personaType, creditLimit, creditBalance, i
 }
 
 // Generate transactions for a user
-function generateTransactions(userId, checkingId, creditId, personaType, startDate, isHeroAccount = false) {
+function generateTransactions(userId, checkingId, creditId, personaType, startDate, isHeroAccount = false, apr = null) {
   const transactions = [];
   const now = new Date();
   const start = new Date(startDate);
@@ -337,7 +345,7 @@ function generateTransactions(userId, checkingId, creditId, personaType, startDa
   );
   transactions.push(...variableTransactions);
   
-  // Credit card payments (minimum for high utilization, more for others)
+  // Credit card payments and interest charges
   // Hero account: months 1-6 high utilization, months 7-12 improvement
   for (let month = 0; month < monthsToGenerate; month++) {
     const paymentDate = getDateForDay(
@@ -346,22 +354,39 @@ function generateTransactions(userId, checkingId, creditId, personaType, startDa
       random(5, 10)
     );
     
+    // Calculate current credit balance before payment
+    // Sum all credit card charges (negative amounts) up to payment date
+    const creditBalanceBeforePayment = transactions
+      .filter(t => {
+        const txnDate = new Date(t.date);
+        const payDate = new Date(paymentDate);
+        return t.account_id === creditId && txnDate <= payDate;
+      })
+      .reduce((sum, t) => {
+        // Credit card charges are negative, payments are positive (from checking)
+        // For credit card account, negative amounts = charges (increase balance)
+        // We need to track the balance on the credit card account
+        if (t.account_id === creditId) {
+          // Negative amount on credit card = charge (adds to balance)
+          return sum + Math.abs(t.amount);
+        }
+        return sum;
+      }, 0);
+    
     // Calculate payment amount based on persona
     // Hero account: months 1-6 high utilization (min payments), months 7-12 improvement (pay more)
-    const creditBalance = transactions
-      .filter(t => t.account_id === creditId && new Date(t.date) <= new Date(paymentDate))
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    
     let paymentAmount;
     if (isHeroAccount && month < 6) {
       // Hero account months 1-6: high utilization, minimum payments
-      paymentAmount = Math.max(25, Math.round(creditBalance * 0.02)); // Minimum payment
+      paymentAmount = Math.max(25, Math.round(creditBalanceBeforePayment * 0.02)); // Minimum payment
     } else if (personaType === PERSONAS.HIGH_UTILIZATION) {
-      paymentAmount = Math.max(25, Math.round(creditBalance * 0.02)); // Minimum payment
+      paymentAmount = Math.max(25, Math.round(creditBalanceBeforePayment * 0.02)); // Minimum payment
     } else {
-      paymentAmount = Math.round(creditBalance * randomFloat(0.5, 1.0)); // Pay more
+      // Pay more - often pay in full or close to it
+      paymentAmount = Math.round(creditBalanceBeforePayment * randomFloat(0.5, 1.0)); // Pay more
     }
     
+    // Add payment transaction (on checking account, reduces credit balance)
     transactions.push({
       transaction_id: generateId('txn-'),
       account_id: checkingId,
@@ -373,6 +398,42 @@ function generateTransactions(userId, checkingId, creditId, personaType, startDa
       personal_finance_category_detailed: 'CREDIT_CARD_PAYMENT',
       pending: 0
     });
+    
+    // Calculate balance after payment (for interest calculation)
+    // This is the balance that will accrue interest
+    const balanceAfterPayment = creditBalanceBeforePayment - paymentAmount;
+    
+    // Generate interest charge if user didn't pay in full AND we have APR
+    // Interest is charged on the balance that remains after payment
+    if (apr && balanceAfterPayment > 0) {
+      // Calculate monthly interest: (balance * APR / 100) / 12
+      const monthlyInterest = (balanceAfterPayment * apr / 100) / 12;
+      
+      // Only charge interest if it's meaningful (> $0.50)
+      if (monthlyInterest >= 0.50) {
+        // Interest charge appears a few days after payment (typical billing cycle)
+        const interestDate = getDateForDay(
+          start.getFullYear(),
+          start.getMonth() + month + 1,
+          random(12, 18) // Interest charge appears mid-month
+        );
+        
+        // Ensure interest charge appears after payment
+        if (new Date(interestDate) > new Date(paymentDate)) {
+          transactions.push({
+            transaction_id: generateId('txn-'),
+            account_id: creditId, // Interest charge on credit card
+            date: interestDate,
+            amount: -Math.round(monthlyInterest * 100) / 100, // Negative (charge)
+            merchant_name: 'Interest Charge',
+            payment_channel: 'other',
+            personal_finance_category_primary: 'GENERAL_MERCHANDISE',
+            personal_finance_category_detailed: 'INTEREST_CHARGE',
+            pending: 0
+          });
+        }
+      }
+    }
   }
   
   // Savings transfers for Savings Builder
@@ -474,8 +535,8 @@ async function generateData() {
            liability.is_overdue, liability.next_payment_due_date]
         );
         
-        // Generate transactions
-        const transactions = generateTransactions(user.user_id, checkingId, creditId, personaType, startDate, isHeroAccount);
+        // Generate transactions (pass APR for interest charge calculation)
+        const transactions = generateTransactions(user.user_id, checkingId, creditId, personaType, startDate, isHeroAccount, liability.apr_percentage);
         
         // Batch insert transactions for performance
         const batchSize = 100;
@@ -554,5 +615,6 @@ if (require.main === module) {
     });
 }
 
-module.exports = { generateData };
+// Export generateData while preserving helper exports
+module.exports.generateData = generateData;
 

@@ -177,6 +177,29 @@ describe('Credit Monitoring', () => {
       expect(result.limit).toBe(0);
     });
 
+    it('should handle negative balance (credit)', async () => {
+      // Negative balance means user has a credit (overpayment)
+      await run(
+        'UPDATE accounts SET balances = ? WHERE account_id = ?',
+        [
+          JSON.stringify({
+            available: 11000,
+            current: -1000, // Negative = credit
+            limit: 10000
+          }),
+          testCreditAccountId
+        ]
+      );
+
+      const result = await calculateUtilization(testCreditAccountId);
+      
+      // Utilization should be 0% when balance is negative
+      expect(result.utilization).toBe(0);
+      expect(result.balance).toBe(-1000);
+      expect(result.threshold).toBe('low');
+      expect(result.isHighUtilization).toBe(false);
+    });
+
     it('should throw error for non-credit account', async () => {
       const checkingAccountId = `test-checking-${Date.now()}`;
       await run(
@@ -260,18 +283,42 @@ describe('Credit Monitoring', () => {
   });
 
   describe('calculateInterestCharges', () => {
-    it('should calculate interest charges based on APR and balance', async () => {
+    it('should calculate interest charges from actual transactions', async () => {
       await run(
         `INSERT INTO liabilities (liability_id, account_id, apr_percentage)
          VALUES (?, ?, ?)`,
         [`liab-${Date.now()}`, testCreditAccountId, 20.0] // 20% APR
       );
 
+      // Create actual interest charge transactions
+      const baseDate = new Date();
+      baseDate.setMonth(baseDate.getMonth() - 2);
+      
+      for (let i = 0; i < 3; i++) {
+        const date = new Date(baseDate);
+        date.setMonth(date.getMonth() + i);
+        date.setDate(15); // Mid-month
+        
+        await run(
+          `INSERT INTO transactions (transaction_id, account_id, date, amount, merchant_name)
+           VALUES (?, ?, ?, ?, ?)`,
+          [
+            `tx-interest-${i}`,
+            testCreditAccountId,
+            date.toISOString().split('T')[0],
+            -108.33, // ~$108.33/month interest (6500 * 20% / 12)
+            'Interest Charge'
+          ]
+        );
+      }
+
       const result = await calculateInterestCharges(testCreditAccountId, 90);
       
-      // Expected: (6500 * 20 / 100) / 12 * 3 months = ~325
-      expect(result.totalCharges).toBeGreaterThan(0);
-      expect(result.monthlyAverage).toBeGreaterThan(0);
+      // Should sum up the 3 interest charge transactions
+      expect(result.totalCharges).toBeGreaterThan(300);
+      expect(result.totalCharges).toBeLessThan(350);
+      expect(result.monthlyAverage).toBeGreaterThan(100);
+      expect(result.chargeCount).toBe(3);
     });
 
     it('should return zero when no APR is set', async () => {

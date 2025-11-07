@@ -9,6 +9,7 @@ export async function initializeDatabase(): Promise<void> {
   try {
     console.log('Initializing database...');
     
+    // Run initial schema migration
     const migrationPath = path.join(__dirname, 'migrations', '001_initial_schema.sql');
     
     // Check if migration file exists
@@ -18,6 +19,14 @@ export async function initializeDatabase(): Promise<void> {
 
     // Run migration
     await runMigration(migrationPath);
+
+    // Run performance indexes migration
+    const performanceMigrationPath = path.join(__dirname, 'migrations', '002_performance_indexes.sql');
+    if (fs.existsSync(performanceMigrationPath)) {
+      console.log('Running performance optimization migration...');
+      await runMigration(performanceMigrationPath);
+      console.log('✅ Performance indexes created');
+    }
 
     // Verify tables were created
     const expectedTables = [

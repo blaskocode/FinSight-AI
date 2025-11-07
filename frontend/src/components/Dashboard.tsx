@@ -1,11 +1,20 @@
 // Dashboard Component
 // Main dashboard layout showing persona and recommendations
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { PersonaCard } from './PersonaCard';
+import { HeroPersonaCard } from './HeroPersonaCard';
+import { FinancialHealthScore } from './FinancialHealthScore';
+import { QuickStatsWidget } from './QuickStatsWidget';
+import { PersonaTimeline } from './PersonaTimeline';
+import { SpendingBreakdown } from './SpendingBreakdown';
 import { RecommendationCard } from './RecommendationCard';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { ChatBubble } from './ChatBubble';
+import { TransactionHistory } from './TransactionHistory';
+import { SkeletonLoader } from './SkeletonLoader';
+import { ErrorMessage } from './ErrorMessage';
+import { Loader2 } from 'lucide-react';
 
 export function Dashboard() {
   const {
@@ -18,14 +27,31 @@ export function Dashboard() {
     error,
     loadProfile,
     loadRecommendations,
+    chatOpen,
+    toggleChat,
   } = useStore();
 
   useEffect(() => {
     if (userId && hasConsent) {
-      loadProfile(userId);
-      loadRecommendations(userId);
+      // Load profile first, then recommendations (recommendations require persona)
+      loadProfile(userId).then(() => {
+        // Only load recommendations after profile (and persona) is loaded
+        if (persona) {
+          loadRecommendations(userId);
+        }
+      }).catch(() => {
+        // If profile fails, still try to load recommendations (they'll handle the error)
+        loadRecommendations(userId);
+      });
     }
   }, [userId, hasConsent, loadProfile, loadRecommendations]);
+
+  // Also load recommendations when persona becomes available
+  useEffect(() => {
+    if (userId && hasConsent && persona && recommendations.length === 0) {
+      loadRecommendations(userId);
+    }
+  }, [userId, hasConsent, persona]);
 
   if (!userId) {
     return (
@@ -42,9 +68,9 @@ export function Dashboard() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">FinSight AI Dashboard</h1>
-            <div className="text-sm text-gray-500">User: {userId}</div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">FinSight AI Dashboard</h1>
+            <div className="text-xs sm:text-sm text-gray-500">User: {userId}</div>
           </div>
         </div>
       </header>
@@ -59,37 +85,50 @@ export function Dashboard() {
         </div>
 
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-red-800 font-semibold mb-1">Error Loading Data</p>
-              <p className="text-red-700 text-sm">{error}</p>
-              <button
-                onClick={() => {
-                  if (userId) {
-                    loadProfile(userId);
-                    loadRecommendations(userId);
-                  }
-                }}
-                className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
-              >
-                Try again
-              </button>
-            </div>
-          </div>
+          <ErrorMessage
+            title="Error Loading Data"
+            message={error}
+            onRetry={() => {
+              if (userId) {
+                loadProfile(userId).catch(() => {});
+                loadRecommendations(userId).catch(() => {});
+              }
+            }}
+            variant="error"
+            className="mb-6"
+          />
         )}
 
         {loading && !persona && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-            <span className="ml-3 text-gray-600">Loading your financial profile...</span>
+          <div className="space-y-6 mb-8">
+            <SkeletonLoader type="card" />
+            <SkeletonLoader type="card" />
           </div>
         )}
 
+        {/* Hero Section with Persona and Health Score */}
         {persona && (
-          <div className="mb-8">
-            <PersonaCard persona={persona} />
+          <div className="mb-8 space-y-6">
+            <HeroPersonaCard persona={persona} />
+            {signals && (
+              <FinancialHealthScore signals={signals} />
+            )}
           </div>
+        )}
+
+        {/* Quick Stats Widget */}
+        {persona && signals && (
+          <QuickStatsWidget persona={persona} signals={signals} />
+        )}
+
+        {/* Persona Evolution Timeline */}
+        {userId && (
+          <PersonaTimeline userId={userId} />
+        )}
+
+        {/* Spending Insights */}
+        {userId && (
+          <SpendingBreakdown userId={userId} />
         )}
 
         {/* Signals Section */}
@@ -268,9 +307,10 @@ export function Dashboard() {
           </h2>
 
           {loading && recommendations.length === 0 && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-              <span className="ml-3 text-gray-600">Loading recommendations...</span>
+            <div className="space-y-4">
+              <SkeletonLoader type="card" />
+              <SkeletonLoader type="card" />
+              <SkeletonLoader type="card" />
             </div>
           )}
 
@@ -294,18 +334,36 @@ export function Dashboard() {
                 rec.title?.toLowerCase().includes('payment plan') ? 'moderate' : 'long_term';
               
               return (
-                <RecommendationCard 
-                  key={rec.id} 
-                  recommendation={rec} 
-                  priority={priority}
-                  difficulty={difficulty}
-                  userId={userId || null}
-                />
+                <div
+                  key={rec.id}
+                  className="animate-fade-in"
+                  style={{
+                    animationDelay: `${index * 100}ms`,
+                    animationFillMode: 'both'
+                  }}
+                >
+                  <RecommendationCard 
+                    recommendation={rec} 
+                    priority={priority}
+                    difficulty={difficulty}
+                    userId={userId || null}
+                  />
+                </div>
               );
             })}
           </div>
         </div>
+
+        {/* Transaction History Section */}
+        {userId && (
+          <div className="mb-8">
+            <TransactionHistory userId={userId} />
+          </div>
+        )}
       </main>
+      
+      {/* Chat Bubble */}
+      <ChatBubble userId={userId} isOpen={chatOpen} onToggle={toggleChat} />
     </div>
   );
 }

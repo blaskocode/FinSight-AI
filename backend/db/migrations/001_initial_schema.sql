@@ -119,7 +119,6 @@ CREATE TABLE IF NOT EXISTS chat_cache (
 -- Indexes for frequently queried columns
 CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id);
-CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(account_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
 CREATE INDEX IF NOT EXISTS idx_liabilities_account_id ON liabilities(account_id);
 CREATE INDEX IF NOT EXISTS idx_consents_user_id ON consents(user_id);

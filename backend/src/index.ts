@@ -1,14 +1,24 @@
+// Load environment variables FIRST before any other imports
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load .env file from backend directory
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { assignPersona, storePersonaAssignment, getCurrentPersona } from '../personas/assignPersona';
 import { generateRecommendations, storeRecommendations, getRecommendations } from '../recommendations/engine';
 import { generatePaymentPlan, generatePaymentPlansComparison } from '../recommendations/paymentPlanner';
+import { processChatMessage } from '../ai/chatService';
 import { recordConsent, revokeConsent, getConsentRecord } from '../guardrails/consent';
 import { requireConsent } from '../middleware/requireConsent';
-import { get } from '../db/db';
-
-dotenv.config();
+import { verifyAdminPassword, getUsersWithConsent, searchUsers, getUserDetail } from '../admin/adminService';
+import { logAdminAction, getAuditLog } from '../admin/auditService';
+import { getUserTransactions } from '../services/transactionService';
+import { getPersonaHistory, groupPersonaHistoryByMonth } from '../services/personaHistoryService';
+import { getSpendingAnalysis } from '../services/spendingAnalysisService';
+import { get, run } from '../db/db';
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -16,6 +26,21 @@ const PORT = process.env.PORT || 3002;
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Performance: Add caching headers for GET requests
+app.use((req: Request, res: Response, next) => {
+  // Cache static data for 5 minutes, dynamic data for 30 seconds
+  if (req.method === 'GET') {
+    // Health check and static endpoints - cache longer
+    if (req.path === '/api/health' || req.path === '/api') {
+      res.set('Cache-Control', 'public, max-age=300'); // 5 minutes
+    } else {
+      // Dynamic endpoints - shorter cache
+      res.set('Cache-Control', 'private, max-age=30'); // 30 seconds
+    }
+  }
+  next();
+});
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
@@ -84,18 +109,31 @@ app.post('/api/consent', async (req: Request, res: Response) => {
 app.get('/api/profile/:user_id', requireConsent, async (req: Request, res: Response) => {
   try {
     const userId = req.params.user_id;
+    console.log('🎯 PROFILE ENDPOINT CALLED for user:', userId);
 
     // Verify user exists
     const user = await get('SELECT * FROM users WHERE user_id = ?', [userId]);
     if (!user) {
+      console.log('❌ User not found:', userId);
       return res.status(404).json({ error: 'User not found' });
     }
+    console.log('✅ User found:', user);
 
     // Check for existing persona assignment
     let currentPersona = await getCurrentPersona(userId);
+    console.log('🔍 Existing persona:', currentPersona ? 'EXISTS' : 'NONE');
 
+    // TEMPORARY: Force recalculation to test new comprehensive metrics code
+    const FORCE_RECALC = true;
+    
     // If no persona assigned or we want to recalculate, assign persona
-    if (!currentPersona) {
+    if (!currentPersona || FORCE_RECALC) {
+      if (FORCE_RECALC && currentPersona) {
+        console.log('🔄 FORCE RECALCULATING PERSONA (testing mode)');
+        // Delete existing persona to recalculate
+        await run('DELETE FROM personas WHERE user_id = ?', [userId]);
+      }
+      console.log('🚀 ASSIGNING NEW PERSONA for user:', userId);
       const result = await assignPersona(userId);
       
       if (result) {
@@ -162,6 +200,19 @@ app.get('/api/recommendations/:user_id', requireConsent, async (req: Request, re
     const partnerOfferCount = recommendations.filter(r => r.type === 'partner_offer').length;
     
     if (educationCount < 3 || partnerOfferCount < 1) {
+      // Check if user has a persona assigned (required for recommendations)
+      const persona = await get('SELECT persona_id FROM personas WHERE user_id = ? ORDER BY assigned_at DESC LIMIT 1', [userId]);
+      
+      if (!persona) {
+        // User doesn't have a persona yet - return empty recommendations with helpful message
+        return res.json({
+          user_id: userId,
+          recommendations: [],
+          count: 0,
+          message: 'Please load your profile first to assign a persona and generate recommendations'
+        });
+      }
+      
       // Generate new recommendations
       const newRecommendations = await generateRecommendations(userId);
       
@@ -225,6 +276,181 @@ app.get('/api/payment-plan/:user_id/compare', requireConsent, async (req, res) =
   } catch (error: any) {
     console.error('Error generating payment plan comparison:', error);
     res.status(500).json({ error: error.message || 'Failed to generate payment plan comparison' });
+  }
+});
+
+// Chat Endpoint
+app.post('/api/chat/:user_id', requireConsent, async (req, res) => {
+  const { user_id: userId } = req.params;
+  const { message, conversation_id } = req.body;
+
+  console.log('=== CHAT REQUEST RECEIVED ===');
+  console.log('User ID:', userId);
+  console.log('Message:', message);
+  console.log('Conversation ID:', conversation_id || 'none');
+
+  if (!message || typeof message !== 'string') {
+    return res.status(400).json({ error: 'Message is required' });
+  }
+
+  try {
+    const result = await processChatMessage(userId, message, conversation_id);
+    console.log('=== CHAT RESPONSE SENT ===');
+    res.json(result);
+  } catch (error: any) {
+    console.error('Error in chat endpoint:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      userId,
+      conversation_id,
+    });
+    res.status(500).json({ 
+      error: error.message || 'Failed to process chat message',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+    });
+  }
+});
+
+// Transaction History Endpoint
+app.get('/api/transactions/:user_id', requireConsent, async (req, res) => {
+  const { user_id: userId } = req.params;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+  const search = req.query.search as string | undefined;
+
+  try {
+    const result = await getUserTransactions(userId, page, limit, search);
+    res.json(result);
+  } catch (error: any) {
+    console.error('Error fetching transactions:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch transactions' });
+  }
+});
+
+// Persona History Endpoint - Get persona evolution timeline
+app.get('/api/persona-history/:user_id', requireConsent, async (req, res) => {
+  const { user_id: userId } = req.params;
+  const months = parseInt(req.query.months as string) || 12;
+
+  try {
+    const history = await getPersonaHistory(userId, months);
+    const grouped = groupPersonaHistoryByMonth(history);
+
+    res.json({
+      user_id: userId,
+      history,
+      timeline: grouped,
+      months
+    });
+  } catch (error: any) {
+    console.error('Error fetching persona history:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch persona history' });
+  }
+});
+
+// Spending Analysis Endpoint
+app.get('/api/spending-analysis/:user_id', requireConsent, async (req, res) => {
+  const { user_id: userId } = req.params;
+  const months = parseInt(req.query.months as string) || 6;
+
+  try {
+    const analysis = await getSpendingAnalysis(userId, months);
+    res.json({
+      user_id: userId,
+      ...analysis,
+      months
+    });
+  } catch (error: any) {
+    console.error('Error fetching spending analysis:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch spending analysis' });
+  }
+});
+
+// Admin Login Endpoint
+app.post('/api/admin/login', async (req: Request, res: Response) => {
+  const { password } = req.body;
+
+  if (!password) {
+    return res.status(400).json({ error: 'Password is required' });
+  }
+
+  const isValid = verifyAdminPassword(password);
+  
+  if (!isValid) {
+    return res.status(401).json({ error: 'Invalid password' });
+  }
+
+  res.json({ success: true, message: 'Login successful' });
+});
+
+// Admin Users Endpoint
+app.get('/api/admin/users', async (req: Request, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const search = req.query.search as string;
+
+    let result;
+    if (search) {
+      result = await searchUsers(search, page, limit);
+    } else {
+      result = await getUsersWithConsent(page, limit);
+    }
+
+    res.json(result);
+  } catch (error: any) {
+    console.error('Error fetching admin users:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch users' });
+  }
+});
+
+// Admin User Detail Endpoint
+app.get('/api/admin/user/:user_id', async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.user_id;
+    const adminId = 'admin'; // Hardcoded for demo
+
+    // Log the admin action
+    await logAdminAction(adminId, userId, 'viewed_profile');
+
+    const userDetail = await getUserDetail(userId);
+
+    if (!userDetail) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(userDetail);
+  } catch (error: any) {
+    console.error('Error fetching user detail:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch user detail' });
+  }
+});
+
+// Admin Audit Log Endpoint
+app.get('/api/admin/audit', async (req: Request, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const adminId = req.query.adminId as string;
+    const userId = req.query.userId as string;
+    const action = req.query.action as string;
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
+
+    const filters = {
+      adminId,
+      userId,
+      action,
+      startDate,
+      endDate,
+    };
+
+    const result = await getAuditLog(filters, page, limit);
+    res.json(result);
+  } catch (error: any) {
+    console.error('Error fetching audit log:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch audit log' });
   }
 });
 

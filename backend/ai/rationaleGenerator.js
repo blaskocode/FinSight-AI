@@ -111,7 +111,8 @@ async function cacheRationale(cacheKey, userId, rationale, ttlDays = 30) {
 /**
  * Create prompt for GPT-4o-mini
  */
-function createPrompt(userName, personaType, signals, recommendation) {
+function createPrompt(userName, personaType, signals, recommendation // Content library item
+) {
     // Format persona type for display
     const personaDisplay = personaType
         .split('_')
@@ -183,7 +184,8 @@ function validateTone(rationale) {
 /**
  * Generate fallback rationale using template
  */
-function generateFallbackRationale(recommendation, signals, accountInfo) {
+function generateFallbackRationale(recommendation, // Content library item
+signals, accountInfo) {
     // Simple template-based fallback
     const utilization = typeof signals.utilization === 'number'
         ? signals.utilization
@@ -192,21 +194,22 @@ function generateFallbackRationale(recommendation, signals, accountInfo) {
     const monthlyRecurring = signals.monthlyRecurringSpend;
     const emergencyFund = signals.emergencyFundCoverage;
     const savingsRate = signals.savingsRate;
+    const recTitle = recommendation.title || 'This recommendation';
     // Try to use specific data points
-    if (utilization > 0 && recommendation.title?.toLowerCase().includes('credit')) {
-        return `We noticed your credit utilization is ${utilization.toFixed(1)}%. ${recommendation.title} could help you understand how to improve your credit score and reduce interest charges.`;
+    if (utilization > 0 && recTitle.toLowerCase().includes('credit')) {
+        return `We noticed your credit utilization is ${utilization.toFixed(1)}%. ${recTitle} could help you understand how to improve your credit score and reduce interest charges.`;
     }
-    if (interestCharges?.monthlyAverage && recommendation.title?.toLowerCase().includes('debt')) {
-        return `You're currently paying approximately $${interestCharges.monthlyAverage.toFixed(2)} per month in interest charges. ${recommendation.title} could help you save money and pay off your debt faster.`;
+    if (interestCharges?.monthlyAverage && recTitle.toLowerCase().includes('debt')) {
+        return `You're currently paying approximately $${interestCharges.monthlyAverage.toFixed(2)} per month in interest charges. ${recTitle} could help you save money and pay off your debt faster.`;
     }
-    if (monthlyRecurring && recommendation.title?.toLowerCase().includes('subscription')) {
-        return `You're spending $${monthlyRecurring.toFixed(2)} per month on recurring subscriptions. ${recommendation.title} could help you identify opportunities to save.`;
+    if (monthlyRecurring && recTitle.toLowerCase().includes('subscription')) {
+        return `You're spending $${monthlyRecurring.toFixed(2)} per month on recurring subscriptions. ${recTitle} could help you identify opportunities to save.`;
     }
-    if (emergencyFund !== undefined && recommendation.title?.toLowerCase().includes('emergency')) {
-        return `Your emergency fund currently covers ${emergencyFund.toFixed(1)} months of expenses. ${recommendation.title} could help you build a stronger financial safety net.`;
+    if (emergencyFund !== undefined && recTitle.toLowerCase().includes('emergency')) {
+        return `Your emergency fund currently covers ${emergencyFund.toFixed(1)} months of expenses. ${recTitle} could help you build a stronger financial safety net.`;
     }
-    if (savingsRate !== undefined && recommendation.title?.toLowerCase().includes('savings')) {
-        return `You're currently saving ${savingsRate.toFixed(1)}% of your income. ${recommendation.title} could help you optimize your savings strategy.`;
+    if (savingsRate !== undefined && recTitle.toLowerCase().includes('savings')) {
+        return `You're currently saving ${savingsRate.toFixed(1)}% of your income. ${recTitle} could help you optimize your savings strategy.`;
     }
     // Generic fallback
     return `This recommendation is tailored to your financial situation and could help you improve your financial health.`;
@@ -214,12 +217,13 @@ function generateFallbackRationale(recommendation, signals, accountInfo) {
 /**
  * Generate personalized rationale using GPT-4o-mini
  * @param userId - The user ID
- * @param recommendation - The recommendation object
+ * @param recommendation - The recommendation object (from content library)
  * @param signals - User's behavioral signals
  * @param accountInfo - Optional account information
  * @returns Personalized rationale string
  */
-async function generateRationale(userId, recommendation, signals, accountInfo) {
+async function generateRationale(userId, recommendation, // Content library item with id, title, description, type, etc.
+signals, accountInfo) {
     // Get user info
     const user = await (0, db_1.get)('SELECT name, email FROM users WHERE user_id = ?', [userId]);
     if (!user) {

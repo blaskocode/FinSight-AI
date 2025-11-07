@@ -362,8 +362,48 @@ async function assignLifestyleCreepPersona(userId) {
     return null;
 }
 /**
+ * Calculate comprehensive financial metrics for a user (all feature detections)
+ * This ensures AI chat can answer questions about any metric
+ * @param userId - The user ID
+ * @returns Object with all calculated metrics
+ */
+async function calculateComprehensiveMetrics(userId) {
+    const metrics = {};
+    // Credit metrics (utilization, interest charges)
+    const creditAccounts = await (0, db_1.all)(`SELECT account_id FROM accounts WHERE user_id = ? AND type = 'credit'`, [userId]);
+    if (creditAccounts.length > 0) {
+        const creditSignals = await (0, creditMonitoring_1.getCreditSignals)(creditAccounts[0].account_id, 90);
+        metrics.utilization = creditSignals.utilization;
+        metrics.interest_charges = creditSignals.interestCharges;
+    }
+    // Savings metrics
+    const savingsAnalysis = await (0, savingsAnalysis_1.getSavingsAnalysis)(userId, 180);
+    if (savingsAnalysis) {
+        metrics.savingsRate = savingsAnalysis.savingsRate;
+        metrics.emergencyFundCoverage = savingsAnalysis.emergencyFundCoverage;
+    }
+    // Income metrics
+    const incomeAnalysis = await (0, incomeStability_1.getIncomeStabilityAnalysis)(userId);
+    if (incomeAnalysis) {
+        metrics.monthlyIncome = incomeAnalysis.averageIncome;
+        metrics.cashFlowBuffer = incomeAnalysis.cashFlowBuffer;
+        metrics.paymentFrequency = incomeAnalysis.paymentFrequency;
+        metrics.payGapVariability = incomeAnalysis.payGapVariability;
+    }
+    // Subscription metrics
+    const subscriptionAnalysis = await (0, subscriptionDetection_1.getSubscriptionAnalysis)(userId, 90);
+    if (subscriptionAnalysis) {
+        metrics.monthlyRecurringSpend = subscriptionAnalysis.monthlyRecurringSpend;
+        metrics.subscriptionShare = subscriptionAnalysis.subscriptionShare;
+        metrics.subscriptionCount = subscriptionAnalysis.recurringMerchants.length;
+    }
+    return metrics;
+}
+/**
  * Assign persona to user with prioritization
  * Priority order: High Util > Variable Income > Lifestyle Creep > Sub Heavy > Savings Builder
+ * However, if High Utilization only matches on interest charges (not utilization >= 50%),
+ * and another persona has higher confidence, use the higher confidence persona.
  * @param userId - The user ID
  * @returns Primary persona assignment and secondary personas, or null if none match
  */
@@ -393,8 +433,35 @@ async function assignPersona(userId) {
     if (assignments.length === 0) {
         return null; // No personas match
     }
+    // Special case: If High Utilization only matches on weak criteria (interest charges/min payment only)
+    // and another persona has significantly higher confidence, prefer the higher confidence persona
+    if (assignments.length > 1 && assignments[0].personaType === 'high_utilization') {
+        const highUtilAssignment = assignments[0];
+        const hasHighUtilization = highUtilAssignment.criteriaMet.some(c => c.startsWith('utilization_') && parseFloat(c.replace('utilization_', '').replace('%', '')) >= 50);
+        const onlyWeakCriteria = !hasHighUtilization && (highUtilAssignment.criteriaMet.includes('interest_charges') ||
+            highUtilAssignment.criteriaMet.includes('minimum_payment_only'));
+        // Find the highest confidence alternative persona
+        const alternatives = assignments.slice(1);
+        const bestAlternative = alternatives.reduce((best, current) => current.confidence > best.confidence ? current : best, alternatives[0]);
+        // If High Utilization only has weak criteria and alternative has much higher confidence, use alternative
+        if (onlyWeakCriteria && bestAlternative && bestAlternative.confidence > highUtilAssignment.confidence + 0.2) {
+            // Use the higher confidence persona as primary, but keep High Utilization as secondary
+            const primary = bestAlternative;
+            const secondary = [highUtilAssignment, ...alternatives.filter(a => a !== bestAlternative)];
+            return { primary, secondary };
+        }
+    }
     // Primary is the first one (highest priority)
     const primary = assignments[0];
     const secondary = assignments.slice(1);
+    // Calculate comprehensive metrics and merge them into primary persona signals
+    // This ensures the AI chat has access to all metrics, not just persona-specific ones
+    const comprehensiveMetrics = await calculateComprehensiveMetrics(userId);
+    primary.signals = {
+        ...primary.signals,
+        ...comprehensiveMetrics,
+        criteriaMet: primary.criteriaMet,
+        confidence: primary.confidence
+    };
     return { primary, secondary };
 }

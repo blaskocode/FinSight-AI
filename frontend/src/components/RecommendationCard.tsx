@@ -48,14 +48,15 @@ export function RecommendationCard({ recommendation, priority = 'medium', diffic
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
+      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
         <div className="flex items-start gap-4">
           <div
             className={`p-3 rounded-lg flex-shrink-0 ${
               isEducation ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
             }`}
+            aria-hidden="true"
           >
-            <Icon className="w-6 h-6" />
+            <Icon className="w-6 h-6" aria-hidden="true" />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -81,7 +82,7 @@ export function RecommendationCard({ recommendation, priority = 'medium', diffic
               </span>
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2" id={`rec-title-${recommendation.id}`}>
               {recommendation.title}
             </h3>
 
@@ -107,7 +108,8 @@ export function RecommendationCard({ recommendation, priority = 'medium', diffic
               {isPaymentPlan ? (
                 <button
                   onClick={() => setShowPaymentPlan(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold flex items-center gap-2"
+                  className="px-4 py-3 min-h-[44px] bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors text-sm font-semibold flex items-center gap-2 touch-manipulation"
+                  aria-label={`View payment plan for ${recommendation.title}`}
                 >
                   View Payment Plan
                 </button>
@@ -118,30 +120,34 @@ export function RecommendationCard({ recommendation, priority = 'medium', diffic
               ) : (
                 <a
                   href="#"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold flex items-center gap-2"
+                  className="px-4 py-3 min-h-[44px] bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors text-sm font-semibold flex items-center gap-2 touch-manipulation"
                   onClick={(e) => {
                     e.preventDefault();
                     // In a real app, this would navigate to the article
                     alert('This would open the educational content');
                   }}
+                  aria-label={`Learn more about ${recommendation.title}`}
                 >
                   Learn More
-                  <ExternalLink className="w-4 h-4" />
+                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
                 </a>
               )}
               
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-semibold flex items-center gap-2"
+                className="px-4 py-3 min-h-[44px] bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 active:bg-gray-300 transition-colors text-sm font-semibold flex items-center gap-2 touch-manipulation"
+                aria-expanded={isExpanded}
+                aria-controls={`rec-details-${recommendation.id}`}
+                aria-label={isExpanded ? 'Hide recommendation details' : 'Show recommendation details'}
               >
                 {isExpanded ? (
                   <>
-                    <ChevronUp className="w-4 h-4" />
+                    <ChevronUp className="w-4 h-4" aria-hidden="true" />
                     Show Less
                   </>
                 ) : (
                   <>
-                    <ChevronDown className="w-4 h-4" />
+                    <ChevronDown className="w-4 h-4" aria-hidden="true" />
                     Show Details
                   </>
                 )}
@@ -150,7 +156,7 @@ export function RecommendationCard({ recommendation, priority = 'medium', diffic
 
             {/* Expanded Details */}
             {isExpanded && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
+              <div id={`rec-details-${recommendation.id}`} className="mt-4 pt-4 border-t border-gray-200" role="region" aria-labelledby={`rec-title-${recommendation.id}`}>
                 <div className="space-y-2 text-sm text-gray-600">
                   <p><strong>Type:</strong> {isEducation ? 'Educational Content' : 'Partner Offer'}</p>
                   <p><strong>Created:</strong> {new Date(recommendation.created_at).toLocaleDateString()}</p>

@@ -3,7 +3,8 @@
 
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
-import { AlertCircle } from 'lucide-react';
+import { ErrorMessage } from './ErrorMessage';
+import { getErrorMessage } from '../services/api';
 
 export function ConsentScreen() {
   const [userId, setUserId] = useState('user-1762493514942-gm8c7gimv'); // Default test user
@@ -64,13 +65,11 @@ export function ConsentScreen() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-red-800 font-semibold mb-1">Error</p>
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
-            </div>
+            <ErrorMessage
+              title="Error"
+              message={error}
+              variant="error"
+            />
           )}
 
           <div>

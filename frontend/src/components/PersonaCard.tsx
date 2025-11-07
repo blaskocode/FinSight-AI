@@ -23,8 +23,8 @@ export function PersonaCard({ persona }: PersonaCardProps) {
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-start gap-4 flex-1">
           {/* Icon */}
-          <div className={`p-3 rounded-lg ${config.color.bg} ${config.color.text}`}>
-            <Icon className="w-6 h-6" />
+          <div className={`p-3 rounded-lg ${config.color.bg} ${config.color.text}`} aria-hidden="true">
+            <Icon className="w-6 h-6" aria-hidden="true" />
           </div>
 
           <div className="flex-1">
@@ -33,8 +33,9 @@ export function PersonaCard({ persona }: PersonaCardProps) {
               {/* Primary Persona Badge */}
               <span
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border ${config.color.bg} ${config.color.text} ${config.color.border}`}
+                aria-label={`Primary persona: ${config.displayName}`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-4 h-4" aria-hidden="true" />
                 {config.displayName}
               </span>
 
@@ -49,8 +50,9 @@ export function PersonaCard({ persona }: PersonaCardProps) {
                       <span
                         key={index}
                         className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border ${secondaryConfig.color.bg} ${secondaryConfig.color.text} ${secondaryConfig.color.border}`}
+                        aria-label={`Secondary persona: ${secondaryConfig.displayName}`}
                       >
-                        <SecondaryIcon className="w-3 h-3" />
+                        <SecondaryIcon className="w-3 h-3" aria-hidden="true" />
                         {secondaryConfig.displayName}
                       </span>
                     );

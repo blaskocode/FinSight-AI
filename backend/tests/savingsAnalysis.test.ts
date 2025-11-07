@@ -203,6 +203,87 @@ describe('Savings Analysis', () => {
       const coverage = await calculateEmergencyFundCoverage(testUserId);
       expect(coverage).toBe(0);
     });
+
+    it('should handle emergency fund coverage with variable expense patterns', async () => {
+      // Set savings balance to $12000
+      await run(
+        `UPDATE accounts SET balances = ? WHERE account_id = ?`,
+        [
+          JSON.stringify({ available: 12000, current: 12000 }),
+          testSavingsId
+        ]
+      );
+
+      // Create variable monthly expenses (some months higher, some lower)
+      const baseDate = new Date();
+      baseDate.setMonth(baseDate.getMonth() - 5); // 6 months of history
+      
+      const monthlyExpenses = [1500, 2000, 1800, 2500, 1600, 2200]; // Variable pattern
+      for (let i = 0; i < 6; i++) {
+        const expenseDate = new Date(baseDate);
+        expenseDate.setMonth(expenseDate.getMonth() + i);
+        
+        await run(
+          `INSERT INTO transactions (transaction_id, account_id, date, amount, merchant_name)
+           VALUES (?, ?, ?, ?, ?)`,
+          [
+            `tx-variable-${i}`,
+            testCheckingId,
+            expenseDate.toISOString().split('T')[0],
+            -monthlyExpenses[i],
+            'Variable Expenses'
+          ]
+        );
+      }
+
+      const coverage = await calculateEmergencyFundCoverage(testUserId);
+      
+      // $12000 savings / average expenses (~$1933/month) = ~6.2 months
+      // Allow for variance in calculation method (may use trailing average)
+      expect(coverage).toBeGreaterThan(3);
+      expect(coverage).toBeLessThan(8);
+    });
+
+    it('should handle emergency fund coverage with high expense months', async () => {
+      // Set savings balance to $10000
+      await run(
+        `UPDATE accounts SET balances = ? WHERE account_id = ?`,
+        [
+          JSON.stringify({ available: 10000, current: 10000 }),
+          testSavingsId
+        ]
+      );
+
+      // Create pattern with one very high expense month (e.g., annual insurance)
+      const baseDate = new Date();
+      baseDate.setMonth(baseDate.getMonth() - 5);
+      
+      for (let i = 0; i < 6; i++) {
+        const expenseDate = new Date(baseDate);
+        expenseDate.setMonth(expenseDate.getMonth() + i);
+        
+        // One month has very high expense (annual payment)
+        const amount = i === 2 ? -5000 : -2000;
+        
+        await run(
+          `INSERT INTO transactions (transaction_id, account_id, date, amount, merchant_name)
+           VALUES (?, ?, ?, ?, ?)`,
+          [
+            `tx-high-${i}`,
+            testCheckingId,
+            expenseDate.toISOString().split('T')[0],
+            amount,
+            i === 2 ? 'Annual Insurance' : 'Monthly Expenses'
+          ]
+        );
+      }
+
+      const coverage = await calculateEmergencyFundCoverage(testUserId);
+      
+      // Should account for the high expense month in average calculation
+      expect(coverage).toBeGreaterThan(0);
+      expect(coverage).toBeLessThan(10);
+    });
   });
 
   describe('calculateSavingsRate', () => {
