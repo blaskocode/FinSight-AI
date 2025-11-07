@@ -2,12 +2,13 @@
 // Global state management for the application
 
 import { create } from 'zustand';
-import { submitConsent, fetchProfile, fetchRecommendations, fetchChatMessage, getErrorMessage } from '../services/api';
+import { login as apiLogin, submitConsent, fetchProfile, fetchRecommendations, fetchChatMessage, getErrorMessage } from '../services/api';
 import type { ProfileResponse, Recommendation, ChatMessage } from '../services/api';
 import { toast } from '../components/Toast';
 
 interface UserState {
   userId: string | null;
+  userName: string | null;
   hasConsent: boolean;
   persona: ProfileResponse['persona'] | null;
   signals: ProfileResponse['signals'] | null;
@@ -26,12 +27,14 @@ interface UserState {
 
 interface UserActions {
   setUserId: (userId: string) => void;
+  setUserName: (userName: string | null) => void;
   setConsent: (hasConsent: boolean) => void;
   setPersona: (persona: ProfileResponse['persona']) => void;
   setSignals: (signals: ProfileResponse['signals']) => void;
   setRecommendations: (recommendations: Recommendation[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  login: (username: string, password: string) => Promise<void>;
   submitConsent: (userId: string, consented: boolean) => Promise<void>;
   loadProfile: (userId: string) => Promise<void>;
   loadRecommendations: (userId: string) => Promise<void>;
@@ -47,6 +50,7 @@ interface UserActions {
 
 const initialState: UserState = {
   userId: null,
+  userName: null,
   hasConsent: false,
   persona: null,
   signals: null,
@@ -66,6 +70,8 @@ export const useStore = create<UserState & UserActions>((set) => ({
 
   setUserId: (userId: string) => set({ userId }),
 
+  setUserName: (userName: string | null) => set({ userName }),
+
   setConsent: (hasConsent: boolean) => set({ hasConsent }),
 
   setPersona: (persona: ProfileResponse['persona']) => set({ persona }),
@@ -77,6 +83,37 @@ export const useStore = create<UserState & UserActions>((set) => ({
   setLoading: (loading: boolean) => set({ loading }),
 
   setError: (error: string | null) => set({ error }),
+
+  login: async (username: string, password: string) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await apiLogin(username, password);
+      if (response.success) {
+        set({
+          userId: response.user_id,
+          userName: response.name,
+          loading: false,
+        });
+        toast.success('Login successful');
+      } else {
+        const errorMessage = response.error || 'Login failed';
+        set({
+          error: errorMessage,
+          loading: false,
+        });
+        toast.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+    } catch (error: any) {
+      const errorMessage = getErrorMessage(error);
+      set({
+        error: errorMessage,
+        loading: false,
+      });
+      toast.error(errorMessage);
+      throw error;
+    }
+  },
 
   submitConsent: async (userId: string, consented: boolean) => {
     set({ loading: true, error: null });
@@ -102,6 +139,7 @@ export const useStore = create<UserState & UserActions>((set) => ({
       set({
         persona: profile.persona,
         signals: profile.signals,
+        userName: profile.name,
         loading: false,
       });
     } catch (error: any) {
@@ -134,9 +172,7 @@ export const useStore = create<UserState & UserActions>((set) => ({
         recommendations: unique,
         loading: false,
       });
-      if (unique.length > 0) {
-        toast.success('Recommendations updated');
-      }
+      // No toast notification - loading indicators show state, content appears when ready
     } catch (error: any) {
       const errorMessage = getErrorMessage(error);
       set({
@@ -184,9 +220,8 @@ export const useStore = create<UserState & UserActions>((set) => ({
       if (isErrorResponse) {
         console.warn('Chat response indicates an error:', response.response);
         toast.error('Unable to process your message. Please try again.');
-      } else {
-        toast.success('Chat message sent');
       }
+      // No success toast - chat messages send silently
     } catch (error: any) {
       // Log error details for debugging
       console.error('Error sending chat message:', error);
@@ -212,6 +247,14 @@ export const useStore = create<UserState & UserActions>((set) => ({
   setAdmin: (isAdmin: boolean) => set({ isAdmin }),
   setView: (view: 'user' | 'admin') => set({ currentView: view }),
 
-  reset: () => set(initialState),
+  reset: () => {
+    // Reset all state - user will see login screen
+    set({
+      ...initialState,
+      // Also reset admin state and view to ensure clean logout
+      isAdmin: false,
+      currentView: 'user',
+    });
+  },
 }));
 

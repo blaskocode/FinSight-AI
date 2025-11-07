@@ -9,6 +9,18 @@
 
 **UI IMPROVEMENT** (Nov 7, 2024): Updated chat suggested questions to be persona-agnostic. Changed "Why am I in the High Utilization persona?" to "What does my persona mean?" and "How can I improve my credit utilization?" to "How can I improve my financial health?" - works for all 5 personas now. File: `frontend/src/components/ChatWindow.tsx` lines 17-23.
 
+**POST-LAUNCH FEATURES** (Nov 7, 2024): ✅ COMPLETE - All six PRs implemented (PR-44 through PR-49):
+
+**Authentication & User Management:**
+- **PR-46**: Username/Password Authentication ✅ - Login screen with username (firstname.lastname) and password ("test" for demo). Backend login endpoint (`POST /api/auth/login`), username utility (`backend/utils/username.ts`), Login component, updated App.tsx flow, removed user ID inputs from ConsentScreen and OnboardingWizard.
+- **PR-44**: User Name Display & Sign Out ✅ - Dashboard header shows user name instead of user ID, sign out button (user switching removed in PR-48). Backend profile endpoint includes name/email, frontend ProfileResponse updated, store includes userName.
+- **PR-45**: Per-User Onboarding Flow ✅ - Onboarding is now per-user (localStorage key: `onboarding_complete_${userId}`). Each new user sees onboarding, returning users skip it.
+
+**UI Improvements:**
+- **PR-47**: Remove Recommendation Update Toasts ✅ - Removed unnecessary toast notifications when recommendations load. Users now see loading indicators (skeleton loaders), then content when ready. File: `frontend/src/store/useStore.ts` line 176.
+- **PR-48**: Remove Chat Toasts & User Switcher ✅ - Removed chat toast notifications ("Chat message sent"). Removed user switcher dropdown from Dashboard header. Simplified header to show user name and sign out button only. Sign out resets all state and shows login screen. Files: `frontend/src/store/useStore.ts`, `frontend/src/components/Dashboard.tsx`.
+- **PR-49**: Add Logout Confirmation Dialog ✅ - Added confirmation dialog before sign out to prevent accidental logouts. Created reusable `ConfirmDialog` component. User must confirm before logout takes effect. Files: `frontend/src/components/ConfirmDialog.tsx`, `frontend/src/components/Dashboard.tsx`.
+
 ### Completed (PR-1)
 - ✅ Monorepo structure created
 - ✅ Backend: Express + TypeScript with health check endpoint
@@ -318,6 +330,13 @@
 3. Expand persona system to support all 5 personas
 
 ## Recent Changes
+- **COMPLETED** (Nov 7, 2024): All post-launch PRs implemented (PR-44 through PR-49):
+  - **PR-46**: Username/Password Authentication ✅ - Login screen with username (firstname.lastname) and password ("test"). Backend login endpoint, username utility, Login component, updated App.tsx flow, removed user ID inputs.
+  - **PR-44**: User Name Display & Sign Out ✅ - Dashboard header shows user name, sign out button (user switching removed in PR-48). Backend profile endpoint includes name/email, frontend ProfileResponse updated, store includes userName.
+  - **PR-45**: Per-User Onboarding Flow ✅ - Onboarding per-user (localStorage key: `onboarding_complete_${userId}`). Each new user sees onboarding, returning users skip it.
+  - **PR-47**: Remove Recommendation Update Toasts ✅ - Removed unnecessary toast notifications when recommendations load. Users see loading indicators (skeleton loaders), then content when ready.
+  - **PR-48**: Remove Chat Toasts & User Switcher ✅ - Removed chat toast notifications ("Chat message sent"). Removed user switcher dropdown. Simplified header to show user name and sign out button only. Sign out resets all state and shows login screen.
+  - **PR-49**: Add Logout Confirmation Dialog ✅ - Added confirmation dialog before sign out to prevent accidental logouts. Created reusable `ConfirmDialog` component. User must confirm before logout takes effect.
 - **UI IMPROVEMENT** (Nov 7, 2024): Updated chat suggested questions to be persona-agnostic
   - Changed: "Why am I in the High Utilization persona?" → "What does my persona mean?"
   - Changed: "How can I improve my credit utilization?" → "How can I improve my financial health?"
@@ -459,9 +478,36 @@
 
 ## Immediate Priorities
 
-1. **MVP Complete** ✅ - All 9 PRs finished (PR-1 through PR-9)
-2. **Phase 1 Complete** ✅ - All 6 PRs finished (PR-10 through PR-15)
-3. **Phase 2 Complete** ✅ - All 6 PRs finished (PR-16 through PR-21):
+1. **PR-49**: Add Logout Confirmation Dialog ✅ COMPLETE
+   - Added confirmation dialog before sign out
+   - Created reusable ConfirmDialog component
+   - Prevents accidental logouts
+2. **PR-48**: Remove Chat Toasts & User Switcher ✅ COMPLETE
+   - Removed chat toast notifications
+   - Removed user switcher dropdown
+   - Simplified header with sign out only
+   - Sign out resets state and shows login screen
+3. **PR-47**: Remove Recommendation Update Toasts ✅ COMPLETE
+   - Removed toast.success('Recommendations updated') from store
+   - Loading indicators (skeleton loaders) show properly
+   - Clean, non-intrusive user experience
+4. **PR-46**: Username/Password Authentication ✅ COMPLETE
+   - Login endpoint created: `POST /api/auth/login`
+   - Username utility: `backend/utils/username.ts` (generateUsername, findUserByUsername)
+   - Login component: `frontend/src/components/Login.tsx`
+   - Password: "test" for all users (demo)
+   - App.tsx shows login screen first
+   - User ID inputs removed from ConsentScreen and OnboardingWizard
+2. **PR-44**: User Name Display & User Switching ✅ COMPLETE
+   - Backend profile endpoint includes name and email
+   - Dashboard header shows user name with user switcher dropdown
+   - User can switch users or sign out from header
+3. **PR-45**: Per-User Onboarding Flow ✅ COMPLETE
+   - Onboarding localStorage key: `onboarding_complete_${userId}`
+   - Each user sees onboarding once, returning users skip it
+4. **MVP Complete** ✅ - All 9 PRs finished (PR-1 through PR-9)
+5. **Phase 1 Complete** ✅ - All 6 PRs finished (PR-10 through PR-15)
+6. **Phase 2 Complete** ✅ - All 6 PRs finished (PR-16 through PR-21):
    - PR-16: Content catalog with 22 education items and 10 partner offers for all 5 personas
    - PR-17: Eligibility checking system with comprehensive filtering for all partner offers
    - PR-18: Recommendation ranking system with impact and urgency scoring

@@ -1,5 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { useStore } from './store/useStore';
+import { Login } from './components/Login';
 import { ConsentScreen } from './components/ConsentScreen';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { Dashboard } from './components/Dashboard';
@@ -12,14 +13,19 @@ const AdminLogin = lazy(() => import('./components/AdminLogin').then(module => (
 const AdminDashboard = lazy(() => import('./components/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
 function App() {
-  const { hasConsent, currentView, isAdmin, setConsent, setUserId } = useStore();
+  const { userId, hasConsent, currentView, isAdmin, setConsent } = useStore();
   // Initialize from localStorage synchronously to avoid showing wrong screen on first render
+  // Onboarding is per-user: check if THIS user has completed onboarding
   const [onboardingComplete, setOnboardingComplete] = useState(() => {
-    return localStorage.getItem('onboarding_complete') === 'true';
+    const currentUserId = useStore.getState().userId;
+    if (!currentUserId) return false;
+    return localStorage.getItem(`onboarding_complete_${currentUserId}`) === 'true';
   });
   const [showOnboarding, setShowOnboarding] = useState(() => {
-    // Show onboarding if user hasn't completed it and doesn't have consent
-    return localStorage.getItem('onboarding_complete') !== 'true' && !hasConsent;
+    const currentUserId = useStore.getState().userId;
+    if (!currentUserId) return false;
+    const userOnboardingComplete = localStorage.getItem(`onboarding_complete_${currentUserId}`) === 'true';
+    return !userOnboardingComplete && !hasConsent;
   });
   const [toasts, setToasts] = useState(toastStore.getToasts());
 
@@ -38,14 +44,23 @@ function App() {
     }
   }, []);
 
-  // Update onboarding state when consent changes
+  // Update onboarding state when userId or consent changes
   useEffect(() => {
-    if (!hasConsent && !onboardingComplete) {
+    if (!userId) {
+      setOnboardingComplete(false);
+      setShowOnboarding(false);
+      return;
+    }
+    
+    const userOnboardingComplete = localStorage.getItem(`onboarding_complete_${userId}`) === 'true';
+    setOnboardingComplete(userOnboardingComplete);
+    
+    if (!hasConsent && !userOnboardingComplete) {
       setShowOnboarding(true);
     } else if (hasConsent) {
       setShowOnboarding(false);
     }
-  }, [hasConsent, onboardingComplete]);
+  }, [userId, hasConsent]);
 
   // Admin views (lazy loaded with Suspense)
   if (currentView === 'admin') {
@@ -64,13 +79,20 @@ function App() {
   }
 
   // User views
+  // Show login screen if user is not logged in
+  if (!userId) {
+    return <Login />;
+  }
+
   // Show onboarding wizard for new users who haven't consented
   if (!hasConsent && showOnboarding && !onboardingComplete) {
     return (
       <OnboardingWizard
         onComplete={() => {
+          if (userId) {
+            localStorage.setItem(`onboarding_complete_${userId}`, 'true');
+          }
           setOnboardingComplete(true);
-          localStorage.setItem('onboarding_complete', 'true');
           setShowOnboarding(false);
         }}
         onSkip={() => {

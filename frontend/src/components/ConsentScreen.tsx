@@ -7,19 +7,22 @@ import { ErrorMessage } from './ErrorMessage';
 import { getErrorMessage } from '../services/api';
 
 export function ConsentScreen() {
-  const [userId, setUserId] = useState('user-1762493514942-gm8c7gimv'); // Default test user
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { submitConsent, setUserId: setStoreUserId } = useStore();
+  const { userId, submitConsent } = useStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!userId) {
+      setError('User ID not found. Please log in again.');
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
       await submitConsent(userId, true);
-      setStoreUserId(userId);
     } catch (error: any) {
       // Error is handled by store, but show user-friendly message
       const errorMessage = error.response?.data?.message || error.message || 'Failed to submit consent. Please try again.';
@@ -72,27 +75,13 @@ export function ConsentScreen() {
             />
           )}
 
-          <div>
-            <label htmlFor="userId" className="block text-sm font-medium text-gray-700 mb-2">
-              User ID
-            </label>
-            <input
-              type="text"
-              id="userId"
-              value={userId}
-              onChange={(e) => {
-                setUserId(e.target.value);
-                setError(null);
-              }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter your user ID"
-              required
-              disabled={isSubmitting}
+          {!userId && (
+            <ErrorMessage
+              title="Error"
+              message="User ID not found. Please log in again."
+              variant="error"
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Use: <code className="bg-gray-100 px-1 rounded">user-1762493514942-gm8c7gimv</code> for testing
-            </p>
-          </div>
+          )}
 
           <button
             type="submit"

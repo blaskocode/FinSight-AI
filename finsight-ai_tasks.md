@@ -1877,6 +1877,257 @@ If time is limited, prioritize in this order:
 
 ---
 
+## 🔧 Post-Launch Features & Improvements
+
+### PR-44: User Name Display & User Switching ✅
+**Estimated Effort**: 2-3 hours
+**Status**: Complete
+
+#### Issue
+- Dashboard currently shows user ID in header instead of user name
+- Users need to see their name in the header
+- Note: User switching functionality was later removed in PR-48 (users sign out and sign back in instead)
+
+#### Tasks:
+- [x] Update backend profile endpoint to include user name and email ✅
+  - Modified `backend/src/index.ts` `/api/profile/:user_id` endpoint
+  - Added `name` and `email` fields to response JSON
+  - Response includes: `{ user_id, name, email, persona, signals }`
+- [x] Update frontend ProfileResponse interface ✅
+  - Added `name: string` and `email?: string` to `ProfileResponse` in `frontend/src/services/api.ts`
+- [x] Update Zustand store to include user name ✅
+  - Added `userName: string | null` to `UserState` interface
+  - Updated `loadProfile` action to store `userName` from profile response
+- [x] Update Dashboard header to display user name ✅
+  - Replaced `User: {userId}` with user name display
+  - Shows user name in header, falls back to user ID if name not available
+- [x] Add sign out functionality ✅
+  - Sign out button in header clears current user
+  - Reset state when signing out (clear consent, persona, recommendations)
+  - Show login screen after sign out
+  - Note: User switching dropdown was removed in PR-48
+
+#### Deliverable
+- Dashboard header shows user name instead of user ID
+- Sign out button resets state and shows login screen
+- Users sign out, then sign back in as different user (user switching removed in PR-48)
+
+---
+
+### PR-45: Per-User Onboarding Flow ✅
+**Estimated Effort**: 1-2 hours
+**Status**: Complete
+
+#### Issue
+- Onboarding only shows once globally (stored in localStorage as `onboarding_complete`)
+- Once a user completes onboarding, it never shows again for any user
+- Need onboarding to show for each new user (per-user basis)
+
+#### Tasks:
+- [x] Update onboarding state to be per-user ✅
+  - Changed localStorage key from `onboarding_complete` to `onboarding_complete_${userId}`
+  - Updated `App.tsx` to check per-user onboarding status
+  - Initialize `onboardingComplete` state based on current user ID
+- [x] Update onboarding completion logic ✅
+  - Store completion status per user: `localStorage.setItem('onboarding_complete_${userId}', 'true')`
+  - Check completion status when user changes
+  - Show onboarding for new users who haven't completed it
+- [x] Update onboarding skip logic ✅
+  - Skip stores per-user status
+  - Handles case where user switches mid-onboarding
+- [x] Test onboarding flow ✅
+  - Onboarding shows for first-time user
+  - Onboarding doesn't show for returning user (same user ID)
+  - Onboarding shows again when switching to different user (after sign out/sign in)
+  - Skip functionality works correctly
+
+#### Deliverable
+- Onboarding shows for each new user (per-user basis)
+- Returning users (same user ID) skip onboarding
+- Switching users shows onboarding if new user hasn't completed it
+
+---
+
+### PR-46: Username/Password Authentication ✅
+**Estimated Effort**: 3-4 hours
+**Status**: Complete
+
+#### Issue
+- Currently users enter user ID directly (e.g., "user-1762524842144-eerpuiw61")
+- User IDs are complex and not user-friendly
+- Need proper login flow with username and password
+- For demo purposes, all passwords should be "test"
+- Usernames should be simple: firstname.lastname (lowercase)
+
+#### Tasks:
+- [x] Create username generation utility ✅
+  - Function to convert full name to username: "John Doe" → "john.doe"
+  - Handle edge cases (multiple spaces, special characters, etc.)
+  - Stored in utility file: `backend/utils/username.ts`
+- [x] Add username lookup function ✅
+  - Created function to find user by username (firstname.lastname)
+  - Query users table with case-insensitive matching
+  - Returns user_id if found
+- [x] Create login endpoint ✅
+  - Added `POST /api/auth/login` endpoint
+  - Accepts: `{ username: string, password: string }`
+  - Validates password (for demo: all passwords are "test")
+  - Returns: `{ user_id, name, email }`
+  - Handles invalid username/password errors
+- [x] Update frontend API service ✅
+  - Added `login(username: string, password: string)` function
+  - Added `LoginResponse` interface
+  - Handles login errors appropriately
+- [x] Create Login component ✅
+  - Replaced user ID input with username/password form
+  - Fields: Username (text), Password (password type)
+  - Submit button with error message display
+  - Styled with Tailwind CSS
+- [x] Update Zustand store ✅
+  - Added `login(username: string, password: string)` action
+  - Stores authentication state
+  - Sets userId and userName after successful login
+  - Handles login errors
+- [x] Update App.tsx flow ✅
+  - Shows Login screen if not authenticated
+  - After login, proceeds to onboarding/consent flow
+  - Removed user ID input from ConsentScreen and OnboardingWizard
+- [x] Update ConsentScreen ✅
+  - Removed user ID input field (userId comes from login)
+  - Uses userId from store
+- [x] Update OnboardingWizard ✅
+  - Removed user ID input field (userId comes from login)
+  - Uses userId from store
+- [x] Test login flow ✅
+  - Tested with valid username/password
+  - Tested with invalid username
+  - Tested with invalid password
+  - Tested with various name formats
+  - Verified username generation works correctly
+
+#### Username Format Rules
+- Convert full name to lowercase
+- Replace spaces with periods
+- Example: "John Doe" → "john.doe"
+- Example: "Mary Jane Smith" → "mary.jane.smith"
+- Example: "Bob" → "bob" (single name)
+
+#### Password Rules (Demo)
+- All users have password: "test"
+- This is for demo purposes only
+- In production, would use proper password hashing
+
+#### Deliverable
+- Users can log in with username (firstname.lastname) and password
+- All passwords are "test" for demo
+- Login screen replaces user ID input
+- After login, user proceeds to onboarding/consent flow
+- User ID is automatically set from login
+
+---
+
+### PR-47: Remove Recommendation Update Toasts ✅
+**Estimated Effort**: 30 minutes
+**Status**: Complete
+
+#### Issue
+- Toast messages appear when recommendations are updated ("Recommendations updated")
+- These toasts are unnecessary and distracting
+- Users should just see loading states, then content when ready
+
+#### Tasks:
+- [x] Remove toast notification from recommendations loading ✅
+  - Removed `toast.success('Recommendations updated')` from `loadRecommendations` action in `frontend/src/store/useStore.ts`
+  - Recommendations now load silently in the background
+- [x] Ensure loading states are properly displayed ✅
+  - Dashboard already shows skeleton loaders while recommendations are loading (verified in Dashboard.tsx lines 365-371)
+  - Loading indicators appear during fetch
+  - Content appears smoothly when loaded
+- [x] Test recommendation loading flow ✅
+  - No toast appears when recommendations load
+  - Loading indicators show during fetch (skeleton loaders)
+  - Content appears when ready
+
+#### Deliverable
+- No toast messages for recommendation updates
+- Loading indicators show while recommendations are loading
+- Content appears smoothly when ready
+- Clean, non-intrusive user experience
+
+---
+
+### PR-48: Remove Chat Toasts & User Switcher ✅
+**Estimated Effort**: 30 minutes
+**Status**: Complete
+
+#### Issue
+- Toast messages appear when chat messages are sent ("Chat message sent")
+- These toasts are unnecessary and distracting
+- User switcher dropdown allows switching users from within the app
+- Users should sign out, then sign back in as a different user instead
+
+#### Tasks:
+- [x] Remove chat toast notification ✅
+  - Removed `toast.success('Chat message sent')` from `sendMessage` action in `frontend/src/store/useStore.ts`
+  - Chat messages now send silently
+- [x] Remove user switcher dropdown ✅
+  - Removed user switching input field from Dashboard header
+  - Removed "Switch User" functionality and dropdown menu
+  - Kept only "Sign Out" button
+- [x] Update sign out functionality ✅
+  - Sign out resets all state (userId, userName, consent, persona, recommendations, chat, admin state)
+  - After sign out, user sees login screen
+  - User can then sign in as a different user
+- [x] Simplify Dashboard header ✅
+  - Shows user name with sign out button only
+  - Removed dropdown menu and user switching input
+  - Clean, simple header design
+
+#### Deliverable
+- No toast messages for chat messages
+- No user switcher dropdown in header
+- Sign out button resets state and shows login screen
+- Users sign out, then sign back in as different user
+- Clean, simple header with just user name and sign out
+
+---
+
+### PR-49: Add Logout Confirmation Dialog ✅
+**Estimated Effort**: 30 minutes
+**Status**: Complete
+
+#### Issue
+- Sign out button immediately logs out user without confirmation
+- Users may accidentally click sign out and lose their session
+- Need confirmation dialog to prevent accidental logouts
+
+#### Tasks:
+- [x] Add confirmation dialog before sign out ✅
+  - Shows confirmation modal/dialog when user clicks "Sign Out"
+  - Asks "Are you sure you want to sign out?"
+  - Includes "Cancel" and "Sign Out" buttons
+  - Only calls `reset()` if user confirms
+- [x] Create confirmation dialog component ✅
+  - Created reusable `ConfirmDialog` component (`frontend/src/components/ConfirmDialog.tsx`)
+  - Styled with Tailwind CSS
+  - Follows existing modal pattern from codebase
+- [x] Update Dashboard sign out button ✅
+  - Shows confirmation before calling `reset()`
+  - Handles cancel action (closes dialog, keeps user logged in)
+  - Handles confirm action (closes dialog, calls `reset()`)
+- [x] Test logout confirmation flow ✅
+  - Confirmation appears when clicking sign out
+  - Cancel keeps user logged in
+  - Confirm logs user out and shows login screen
+
+#### Deliverable
+- Confirmation dialog appears before sign out
+- User must confirm before logout takes effect
+- Cancel button keeps user logged in
+- Prevents accidental logouts
+
+---
+
 ## 🐛 Post-Launch Bug Fixes & Improvements
 
 ### Nov 7, 2024 - AI Chat Improvements

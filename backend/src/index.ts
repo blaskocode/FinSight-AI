@@ -19,6 +19,7 @@ import { getUserTransactions } from '../services/transactionService';
 import { getPersonaHistory, groupPersonaHistoryByMonth } from '../services/personaHistoryService';
 import { getSpendingAnalysis } from '../services/spendingAnalysisService';
 import { get, run } from '../db/db';
+import { findUserByUsername } from '../utils/username';
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -104,6 +105,60 @@ app.post('/api/consent', async (req: Request, res: Response) => {
   }
 });
 
+// Login endpoint - Authenticate user with username and password
+app.post('/api/auth/login', async (req: Request, res: Response) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid request',
+        message: 'Username and password are required'
+      });
+    }
+
+    // For demo: all passwords are "test"
+    const DEMO_PASSWORD = 'test';
+
+    if (password !== DEMO_PASSWORD) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid credentials',
+        message: 'Invalid username or password'
+      });
+    }
+
+    // Find user by username
+    const user = await findUserByUsername(username);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid credentials',
+        message: 'Invalid username or password'
+      });
+    }
+
+    // Return success with user info
+    res.json({
+      success: true,
+      user_id: user.user_id,
+      name: user.name,
+      email: user.email,
+      message: 'Login successful'
+    });
+
+  } catch (error: any) {
+    console.error('Error processing login:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
 // Profile endpoint - Get user's behavioral profile and persona
 // Protected by consent middleware
 app.get('/api/profile/:user_id', requireConsent, async (req: Request, res: Response) => {
@@ -147,6 +202,8 @@ app.get('/api/profile/:user_id', requireConsent, async (req: Request, res: Respo
         // No persona matches
         return res.json({
           user_id: userId,
+          name: user.name,
+          email: user.email,
           persona: null,
           signals: {},
           message: 'No persona assigned - criteria not met'
@@ -162,6 +219,8 @@ app.get('/api/profile/:user_id', requireConsent, async (req: Request, res: Respo
     // Return profile with persona and signals
     res.json({
       user_id: userId,
+      name: user.name,
+      email: user.email,
       persona: {
         type: currentPersona.persona_type,
         assigned_at: currentPersona.assigned_at,

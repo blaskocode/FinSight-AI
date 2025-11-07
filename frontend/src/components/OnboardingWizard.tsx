@@ -24,12 +24,11 @@ interface OnboardingWizardProps {
 
 export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>(1);
-  const [userId, setUserId] = useState('user-1762493514942-gm8c7gimv');
   const [consentChecked, setConsentChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const { submitConsent, setUserId: setStoreUserId, loadProfile } = useStore();
+  const { userId, submitConsent, loadProfile } = useStore();
 
   const handleNext = () => {
     if (currentStep < 3) {
@@ -46,12 +45,16 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
   };
 
   const handleConsentSubmit = async () => {
+    if (!userId) {
+      setError('User ID not found. Please log in again.');
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
       await submitConsent(userId, true);
-      setStoreUserId(userId);
       // Load profile in the background (for dashboard)
       loadProfile(userId).catch((error) => {
         console.error('Failed to load profile:', error);
@@ -230,7 +233,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               <div className="text-center mb-6">
                 <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">Ready to Begin?</h2>
-                <p className="text-gray-600">Provide your user ID and consent to continue</p>
+                <p className="text-gray-600">Provide your consent to continue</p>
               </div>
 
               <div className="max-w-md mx-auto space-y-6">
@@ -244,27 +247,11 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                   </div>
                 )}
 
-                <div>
-                  <label htmlFor="userId" className="block text-sm font-medium text-gray-700 mb-2">
-                    User ID
-                  </label>
-                  <input
-                    type="text"
-                    id="userId"
-                    value={userId}
-                    onChange={(e) => {
-                      setUserId(e.target.value);
-                      setError(null);
-                    }}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
-                    placeholder="Enter your user ID"
-                    required
-                    disabled={isSubmitting}
-                  />
-                  <p className="mt-2 text-xs text-gray-500">
-                    Use: <code className="bg-gray-100 px-1 rounded">user-1762493514942-gm8c7gimv</code> for testing
-                  </p>
-                </div>
+                {!userId && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-yellow-800 text-sm">User ID not found. Please log in again.</p>
+                  </div>
+                )}
 
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <label className="flex items-start gap-3 cursor-pointer">
@@ -297,7 +284,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
                   </button>
                   <button
                     onClick={handleConsentSubmit}
-                    disabled={!consentChecked || !userId.trim() || isSubmitting}
+                    disabled={!consentChecked || !userId || isSubmitting}
                     className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 min-h-[44px] rounded-lg font-semibold hover:bg-blue-700 active:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
                   >
                     {isSubmitting ? (

@@ -85,6 +85,15 @@ export async function retryApiCall<T>(
   throw lastError;
 }
 
+export interface LoginResponse {
+  success: boolean;
+  user_id: string;
+  name: string;
+  email: string;
+  message?: string;
+  error?: string;
+}
+
 export interface ConsentResponse {
   success: boolean;
   message: string;
@@ -100,6 +109,8 @@ export interface ConsentResponse {
 
 export interface ProfileResponse {
   user_id: string;
+  name: string;
+  email?: string;
   persona: {
     type: string;
     assigned_at: string;
@@ -165,6 +176,19 @@ export interface RecommendationsResponse {
   user_id: string;
   recommendations: Recommendation[];
   count: number;
+}
+
+/**
+ * Login with username and password
+ */
+export async function login(username: string, password: string): Promise<LoginResponse> {
+  return retryApiCall(async () => {
+    const response = await api.post<LoginResponse>('/auth/login', {
+      username,
+      password,
+    });
+    return response.data;
+  });
 }
 
 /**

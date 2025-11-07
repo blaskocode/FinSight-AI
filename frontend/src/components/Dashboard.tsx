@@ -14,11 +14,13 @@ import { ChatBubble } from './ChatBubble';
 import { TransactionHistory } from './TransactionHistory';
 import { SkeletonLoader } from './SkeletonLoader';
 import { ErrorMessage } from './ErrorMessage';
-import { Loader2 } from 'lucide-react';
+import { ConfirmDialog } from './ConfirmDialog';
+import { Loader2, LogOut } from 'lucide-react';
 
 export function Dashboard() {
   const {
     userId,
+    userName,
     hasConsent,
     persona,
     signals,
@@ -29,7 +31,10 @@ export function Dashboard() {
     loadRecommendations,
     chatOpen,
     toggleChat,
+    reset,
   } = useStore();
+  
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     if (userId && hasConsent) {
@@ -70,7 +75,19 @@ export function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">FinSight AI Dashboard</h1>
-            <div className="text-xs sm:text-sm text-gray-500">User: {userId}</div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-700">{userName || userId}</span>
+              <button
+                onClick={() => {
+                  setShowLogoutConfirm(true);
+                }}
+                className="flex items-center gap-2 text-sm text-gray-700 hover:text-gray-900 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                title="Sign Out"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -364,6 +381,22 @@ export function Dashboard() {
       
       {/* Chat Bubble */}
       <ChatBubble userId={userId} isOpen={chatOpen} onToggle={toggleChat} />
+      
+      {/* Logout Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        title="Sign Out"
+        message="Are you sure you want to sign out? You'll need to log in again to access your dashboard."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        onConfirm={() => {
+          setShowLogoutConfirm(false);
+          reset();
+        }}
+        onCancel={() => {
+          setShowLogoutConfirm(false);
+        }}
+      />
     </div>
   );
 }

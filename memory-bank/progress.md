@@ -20,6 +20,15 @@
 ### ✅ Phase 5 - COMPLETE (PR-34 through PR-43)
 **Status**: All Phase 5 PRs complete! PR-34, PR-35, PR-36, PR-37, PR-38, PR-39, PR-40, PR-41, PR-42, and PR-43 all finished. All feature detection tests (53), business logic tests (34), and integration tests (55) passing. Total: 142 tests (138 passing). Performance optimizations, comprehensive error handling, complete documentation, API documentation, decision log/limitations documentation, demo materials, and final polish all complete. All audits passed: Security ✅, Accessibility ✅ (WCAG 2.1 AA), Performance ✅, UI/UX ✅. Application is production-ready! 🚀
 
+### ✅ Post-Launch Features (PR-44 through PR-49) - COMPLETE
+**Status**: All six PRs complete!
+- **PR-46**: Username/Password Authentication ✅ - Login screen with username/password, backend login endpoint, username utility
+- **PR-44**: User Name Display & Sign Out ✅ - Dashboard header shows name, sign out button (user switching removed in PR-48)
+- **PR-45**: Per-User Onboarding Flow ✅ - Onboarding per-user (localStorage key with userId)
+- **PR-47**: Remove Recommendation Update Toasts ✅ - Removed unnecessary toast notifications, loading states show properly
+- **PR-48**: Remove Chat Toasts & User Switcher ✅ - Removed chat toasts, removed user switcher dropdown, simplified header with sign out only
+- **PR-49**: Add Logout Confirmation Dialog ✅ - Confirmation dialog before sign out, prevents accidental logouts
+
 ### ✅ MVP - PR-1: Project Foundation & Setup (COMPLETE)
 - Monorepo structure with backend, frontend, shared, and data-gen directories
 - Backend Express server with TypeScript
@@ -45,6 +54,47 @@
   - Cursor rules established (`.cursor/rules/project-workflow.mdc`)
 
 ## What's Left to Build
+
+### ✅ Post-Launch Features (PR-44 through PR-49) - COMPLETE
+- [x] **PR-46**: Username/Password Authentication ✅
+  - Created login endpoint: `POST /api/auth/login`
+  - Username utility: `backend/utils/username.ts` (generateUsername, findUserByUsername)
+  - Login component: `frontend/src/components/Login.tsx`
+  - Password: "test" for all users (demo)
+  - App.tsx shows login screen first
+  - Removed user ID input from ConsentScreen and OnboardingWizard
+- [x] **PR-44**: User Name Display & Sign Out ✅
+  - Backend profile endpoint includes name and email
+  - Dashboard header displays user name (falls back to user ID)
+  - Sign out button resets state and shows login screen
+  - Note: User switching dropdown removed in PR-48
+- [x] **PR-45**: Per-User Onboarding Flow ✅
+  - Onboarding localStorage key: `onboarding_complete_${userId}`
+  - Each new user sees onboarding, returning users skip it
+  - App.tsx checks per-user onboarding status
+- [x] **PR-47**: Remove Recommendation Update Toasts ✅
+  - Removed toast.success('Recommendations updated') from store
+  - Loading indicators (skeleton loaders) show during fetch
+  - Content appears smoothly when ready
+- [x] **PR-48**: Remove Chat Toasts & User Switcher ✅
+  - Removed toast.success('Chat message sent') from store
+  - Removed user switcher dropdown from Dashboard header
+  - Simplified header: user name + sign out button only
+  - Sign out resets all state and shows login screen
+- [x] **PR-49**: Add Logout Confirmation Dialog ✅
+  - Created reusable ConfirmDialog component
+  - Added confirmation dialog before sign out
+  - Prevents accidental logouts
+  - User must confirm before logout takes effect
+- [x] **PR-44**: User Name Display & Sign Out ✅
+  - Backend profile endpoint includes name and email
+  - Dashboard header displays user name (falls back to user ID)
+  - Sign out button resets state and shows login screen
+  - Note: User switching dropdown removed in PR-48
+- [x] **PR-45**: Per-User Onboarding Flow ✅
+  - Onboarding localStorage key: `onboarding_complete_${userId}`
+  - Each new user sees onboarding, returning users skip it
+  - App.tsx checks per-user onboarding status
 
 ### MVP Remaining (PR-3 through PR-9)
 
