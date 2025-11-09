@@ -15,6 +15,7 @@ import { TransactionHistory } from './TransactionHistory';
 import { SkeletonLoader } from './SkeletonLoader';
 import { ErrorMessage } from './ErrorMessage';
 import { ConfirmDialog } from './ConfirmDialog';
+import { OverarchingMessage } from './OverarchingMessage';
 import { Loader2, LogOut } from 'lucide-react';
 
 export function Dashboard() {
@@ -132,6 +133,9 @@ export function Dashboard() {
             )}
           </div>
         )}
+
+        {/* Overarching AI Message with Actionable Recommendations */}
+        {userId && <OverarchingMessage userId={userId} />}
 
         {/* Quick Stats Widget */}
         {persona && signals && (

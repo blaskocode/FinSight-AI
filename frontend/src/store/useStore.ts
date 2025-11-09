@@ -89,6 +89,9 @@ export const useStore = create<UserState & UserActions>((set) => ({
     try {
       const response = await apiLogin(username, password);
       if (response.success) {
+        // Store userId and userName in localStorage for persistence
+        localStorage.setItem('userId', response.user_id);
+        localStorage.setItem('userName', response.name);
         set({
           userId: response.user_id,
           userName: response.name,
@@ -136,6 +139,10 @@ export const useStore = create<UserState & UserActions>((set) => ({
     set({ loading: true, error: null });
     try {
       const profile = await fetchProfile(userId);
+      // Update userName in localStorage if it changed
+      if (profile.name) {
+        localStorage.setItem('userName', profile.name);
+      }
       set({
         persona: profile.persona,
         signals: profile.signals,
@@ -248,6 +255,9 @@ export const useStore = create<UserState & UserActions>((set) => ({
   setView: (view: 'user' | 'admin') => set({ currentView: view }),
 
   reset: () => {
+    // Clear localStorage on logout
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
     // Reset all state - user will see login screen
     set({
       ...initialState,

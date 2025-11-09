@@ -1,7 +1,7 @@
 // PersonaTimeline Component
 // Horizontal timeline showing persona evolution over time
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { fetchPersonaHistory } from '../services/api';
 import type { PersonaTimelineEntry, PersonaHistoryEntry } from '../services/api';
 import { getPersonaConfig } from '../utils/personaConfig';
@@ -62,29 +62,53 @@ export function PersonaTimeline({ userId }: PersonaTimelineProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [narrative, setNarrative] = useState('');
+  const loadingRef = useRef(false);
 
   useEffect(() => {
+    if (!userId || loadingRef.current) {
+      return;
+    }
     loadPersonaHistory();
   }, [userId]);
 
   const loadPersonaHistory = async () => {
+    if (loadingRef.current) {
+      return; // Already loading
+    }
+    loadingRef.current = true;
+    if (!userId) {
+      console.warn('PersonaTimeline: No userId provided');
+      loadingRef.current = false;
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     try {
+      console.log('PersonaTimeline: Fetching history for user:', userId);
       const data = await fetchPersonaHistory(userId, 12);
-      setTimeline(data.timeline);
-      setHistory(data.history);
+      console.log('PersonaTimeline: Received data:', { 
+        timelineLength: data.timeline?.length, 
+        historyLength: data.history?.length,
+        timeline: data.timeline,
+        history: data.history
+      });
+      
+      setTimeline(data.timeline || []);
+      setHistory(data.history || []);
       
       // Generate narrative
-      const currentPersona = data.timeline.length > 0 
+      const currentPersona = data.timeline && data.timeline.length > 0 
         ? data.timeline[data.timeline.length - 1].persona_type 
         : '';
-      setNarrative(generateNarrative(data.timeline, currentPersona));
+      setNarrative(generateNarrative(data.timeline || [], currentPersona));
     } catch (err: any) {
-      console.error('Failed to fetch persona history:', err);
-      setError(err.response?.data?.error || 'Failed to load persona history');
+      console.error('PersonaTimeline: Failed to fetch persona history:', err);
+      console.error('PersonaTimeline: Error details:', err.response?.data || err.message);
+      setError(err.response?.data?.error || err.message || 'Failed to load persona history');
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
   };
 
@@ -128,24 +152,24 @@ export function PersonaTimeline({ userId }: PersonaTimelineProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+    <div className="bg-white rounded-lg shadow-md p-6 mb-8 overflow-visible relative z-0">
       <h2 className="text-xl font-semibold text-gray-900 mb-4">Persona Evolution</h2>
       
       {/* Narrative */}
       {narrative && (
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-blue-900 text-sm leading-relaxed">{narrative}</p>
         </div>
       )}
 
       {/* Timeline */}
-      <div className="overflow-x-auto pb-4">
-        <div className="relative min-w-full" style={{ minWidth: `${Math.max(timeline.length * 120, 600)}px` }}>
+      <div className="overflow-x-auto overflow-y-visible pb-4 pt-4 relative z-10">
+        <div className="relative min-w-full z-10" style={{ minWidth: `${Math.max(timeline.length * 120, 600)}px` }}>
           {/* Timeline Line */}
-          <div className="absolute top-12 left-0 right-0 h-1 bg-gray-200" />
+          <div className="absolute top-12 left-0 right-0 h-1 bg-gray-200 z-0" />
           
           {/* Timeline Entries */}
-          <div className="relative flex gap-4">
+          <div className="relative flex gap-4 overflow-visible z-10">
             {timeline.map((entry, index) => {
               const config = getPersonaConfig(entry.persona_type);
               const Icon = config.icon;
@@ -154,19 +178,19 @@ export function PersonaTimeline({ userId }: PersonaTimelineProps) {
 
               return (
                 <div
-                  key={`${entry.year}-${entry.monthIndex}`}
-                  className="flex flex-col items-center relative"
+                  key={`${entry.year}-${entry.monthIndex}-${entry.persona_type}-${entry.startDate}`}
+                  className="flex flex-col items-center relative z-10"
                   style={{ minWidth: '100px' }}
                 >
                   {/* Persona Badge */}
                   <div
-                    className={`relative z-10 ${config.color.bg} ${config.color.border} rounded-full p-3 border-2 shadow-lg transition-transform hover:scale-110 cursor-pointer group`}
+                    className={`relative z-20 ${config.color.bg} ${config.color.border} rounded-full p-3 border-2 shadow-lg transition-all duration-200 hover:scale-110 hover:shadow-2xl cursor-pointer group`}
                     title={`${config.displayName} - ${entry.month} ${entry.year}`}
                   >
                     <Icon className={`w-6 h-6 ${config.color.text}`} />
                     
                     {/* Tooltip */}
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-xl">
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
                       <div className="font-semibold">{config.displayName}</div>
                       <div className="text-gray-300">{entry.month} {entry.year}</div>
                       <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />

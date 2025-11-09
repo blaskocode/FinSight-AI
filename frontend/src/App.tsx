@@ -13,16 +13,17 @@ const AdminLogin = lazy(() => import('./components/AdminLogin').then(module => (
 const AdminDashboard = lazy(() => import('./components/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 
 function App() {
-  const { userId, hasConsent, currentView, isAdmin, setConsent } = useStore();
+  const { userId, hasConsent, currentView, isAdmin, setConsent, setUserId, setUserName, loadProfile } = useStore();
   // Initialize from localStorage synchronously to avoid showing wrong screen on first render
-  // Onboarding is per-user: check if THIS user has completed onboarding
+  // Restore userId and userName from localStorage on app mount (PR-54)
+  const [isInitializing, setIsInitializing] = useState(true);
   const [onboardingComplete, setOnboardingComplete] = useState(() => {
-    const currentUserId = useStore.getState().userId;
+    const currentUserId = useStore.getState().userId || localStorage.getItem('userId');
     if (!currentUserId) return false;
     return localStorage.getItem(`onboarding_complete_${currentUserId}`) === 'true';
   });
   const [showOnboarding, setShowOnboarding] = useState(() => {
-    const currentUserId = useStore.getState().userId;
+    const currentUserId = useStore.getState().userId || localStorage.getItem('userId');
     if (!currentUserId) return false;
     const userOnboardingComplete = localStorage.getItem(`onboarding_complete_${currentUserId}`) === 'true';
     return !userOnboardingComplete && !hasConsent;
@@ -36,6 +37,45 @@ function App() {
     });
     return unsubscribe;
   }, []);
+
+  // Restore login state from localStorage on app mount (PR-54)
+  useEffect(() => {
+    const storedUserId = localStorage.getItem('userId');
+    const storedUserName = localStorage.getItem('userName');
+    
+    if (storedUserId && !userId) {
+      // Restore user state from localStorage
+      setUserId(storedUserId);
+      if (storedUserName) {
+        setUserName(storedUserName);
+      }
+      
+      // Check consent status from backend (PR-55)
+      loadProfile(storedUserId)
+        .then(() => {
+          // Profile loaded successfully - consent is checked via profile endpoint
+          // The profile endpoint requires consent, so if it succeeds, user has consent
+          setConsent(true);
+          setIsInitializing(false);
+        })
+        .catch((error: any) => {
+          // Profile load failed - user may not have consent or other error
+          // Check if it's a consent error (403) or other error
+          const status = error?.response?.status || error?.status;
+          const message = error?.response?.data?.message || error?.message || '';
+          if (status === 403 || message.toLowerCase().includes('consent')) {
+            setConsent(false);
+          } else {
+            // Other error - still set consent to false to show consent screen
+            // User can retry after consenting
+            setConsent(false);
+          }
+          setIsInitializing(false);
+        });
+    } else {
+      setIsInitializing(false);
+    }
+  }, []); // Only run on mount
 
   // Check for admin route on mount
   useEffect(() => {
@@ -79,6 +119,11 @@ function App() {
   }
 
   // User views
+  // Show loading state while initializing (checking localStorage and consent)
+  if (isInitializing) {
+    return <SkeletonLoader type="card" />;
+  }
+  
   // Show login screen if user is not logged in
   if (!userId) {
     return <Login />;

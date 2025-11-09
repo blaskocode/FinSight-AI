@@ -14,3 +14,6 @@ echo ""
 echo "   node scripts/check-user-signals.js <user_id>"
 echo ""
 
+
+
+

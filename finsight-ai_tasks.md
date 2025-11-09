@@ -2128,6 +2128,354 @@ If time is limited, prioritize in this order:
 
 ---
 
+### PR-50: Fix Chart Visualization Issues ✅
+**Estimated Effort**: 1 hour
+**Status**: Complete
+
+#### Issue
+- Spending by Category pie chart has overlapping text labels and text running off screen
+- Monthly Income vs Expenses bar chart has legend labels too close to "Month" axis label
+- Axis labels are not nicely centered
+
+#### Tasks:
+- [x] Fix pie chart label issues ✅
+  - Removed inline labels that overlap and run off screen
+  - Used legend instead of inline labels for better readability
+  - Legend shows category name and percentage
+  - All category names are visible and readable
+- [x] Fix bar chart legend positioning ✅
+  - Moved legend to top of chart (verticalAlign="top")
+  - Added padding to separate legend from chart
+  - Proper spacing between legend and axis labels
+- [x] Fix axis label centering ✅
+  - Centered "Amount ($)" label on Y-axis (offset: 0)
+  - Centered "Month" label on X-axis (offset: 0)
+  - Adjusted label positioning for better alignment
+
+#### Deliverable
+- Pie chart labels are readable with no overlapping or text running off screen
+- Bar chart legend is properly spaced from axis labels
+- Axis labels are nicely centered
+- Charts are visually clean and professional
+- Legend does not overlap with "Top Merchants" section below
+
+#### Notes
+- Increased chart container height from 300px to 350px
+- Moved pie chart center up (cy: 45%) and reduced size (outerRadius: 90)
+- Increased legend height to 80px with padding
+- Added margin spacing between charts and Top Merchants section
+
+---
+
+### PR-51: Re-categorize Credit Card Payments, Rent, Mortgage, Utilities as ACH Transfers ✅
+**Estimated Effort**: 1-2 hours
+**Status**: Complete
+
+#### Issue
+- Credit card payments, rent, mortgage, utilities are being treated as merchants
+- These transactions appear in "Top Merchants" list
+- These transactions trigger "Unusual Spending Alerts"
+- These should be categorized as ACH transfers, not merchants
+
+#### Tasks:
+- [x] Identify ACH transfer transactions ✅
+  - Created `isACHTransfer()` helper function
+  - Detects credit card payments (merchant/category: "Credit Card Payment", "CREDIT_CARD_PAYMENT", "TRANSFER_OUT")
+  - Detects rent payments (merchant: "Rent Payment")
+  - Detects mortgage payments (merchant: "mortgage", "loan payment", category: "MORTGAGE")
+  - Detects utilities (category: "RENT_AND_UTILITIES" with utility keywords)
+- [x] Exclude ACH transfers from top merchants ✅
+  - Filtered out ACH transfer transactions when building top merchants list
+  - Updated `getSpendingAnalysis` in `spendingAnalysisService.ts`
+  - Only includes actual merchant transactions
+- [x] Exclude ACH transfers from unusual spending alerts ✅
+  - Filtered out ACH transfer transactions when detecting unusual spending
+  - These are expected recurring payments, not unusual spending
+  - Updated unusual spending detection logic to only analyze merchant expenses
+- [x] Update category breakdown (optional) ✅
+  - Kept ACH transfers in category breakdown (they're still expenses)
+  - Excluded from merchant analysis only
+
+#### Deliverable
+- Credit card payments, rent, mortgage, utilities excluded from top merchants
+- These transactions do not trigger unusual spending alerts
+- ACH transfers properly identified and categorized
+- Top merchants list only shows actual merchant transactions
+
+#### Notes
+- Fixed issue where outdated compiled JS file (`spendingAnalysisService.js`) was being used instead of TypeScript file
+- Deleted compiled JS file so backend uses TypeScript file with `ts-node`
+- Added debug logging to verify ACH transfers are being excluded
+- Backend server restart required for changes to take effect
+
+---
+
+### PR-52: Replace Confidence with Secondary Personas Display ✅
+**Estimated Effort**: 30 minutes
+**Status**: Complete
+
+#### Issue
+- Users see confidence level displayed in persona cards (PersonaCard and HeroPersonaCard)
+- Confidence level is not useful information for end users
+- Secondary personas are already supposed to be showing but may not be visible
+- Should replace confidence display with secondary personas display in the same space
+
+#### Tasks:
+- [x] Remove confidence display from PersonaCard ✅
+  - Removed confidence percentage display (lines 66-72)
+  - Replaced with secondary personas display in that space
+  - Removed duplicate secondary personas display next to primary badge
+  - Made secondary personas more prominent in dedicated space
+- [x] Remove confidence display from HeroPersonaCard ✅
+  - Removed confidence percentage display (lines 142-152)
+  - Replaced with secondary personas display in that space
+  - Removed duplicate secondary personas display next to primary badge
+  - Made secondary personas more prominent and visible
+- [x] Verify secondary personas are being returned from backend ✅
+  - Confirmed `secondary_personas` array is populated in profile response (backend/src/index.ts line 229)
+  - Backend is calculating and returning secondary personas correctly
+  - Secondary personas are extracted from `assignPersona()` result and stored
+- [x] Update persona card layouts ✅
+  - Secondary personas are clearly visible in dedicated space
+  - Using the space previously occupied by confidence score
+  - Secondary personas badges are prominent and readable
+  - Shows "No secondary personas" message when none exist
+
+#### Deliverable
+- Confidence level removed from persona displays
+- Secondary personas displayed prominently in place of confidence
+- Secondary personas clearly visible and readable
+- Better use of space in persona cards
+
+---
+
+### PR-53: Clear Chat Input After Sending Message ✅
+**Estimated Effort**: 15 minutes
+**Status**: Complete
+
+#### Issue
+- When user sends a message in the AI Assistant, the message text does not disappear from the input box
+- Text should clear immediately when the send button is clicked or Enter is pressed
+- Currently, text remains in the input field after sending
+
+#### Tasks:
+- [x] Fix handleSend function in ChatWindow ✅
+  - InputValue is cleared immediately when send is triggered (line 48)
+  - Input clears on both button click and Enter key press
+  - Input clears before async sendMessage call
+- [x] Fix handleSuggestedQuestion function ✅
+  - Clear input immediately before sending suggested question
+  - Input no longer shows question text after sending
+- [x] Test input clearing behavior ✅
+  - Input clears on button click
+  - Input clears on Enter key press
+  - Input clears when using suggested questions
+  - Input stays clear while message is being sent
+
+#### Deliverable
+- Input field clears immediately when message is sent
+- Text disappears from input box on both button click and Enter key
+- Input stays clear while message is being sent
+- Suggested questions don't leave text in input after sending
+
+---
+
+### PR-54: Persist Logged In User on Refresh ✅
+**Estimated Effort**: 30 minutes
+**Status**: Complete
+
+#### Issue
+- When user refreshes the page, they are logged out and need to log in again
+- User should remain logged in after page refresh
+- Login state should persist across browser sessions
+
+#### Tasks:
+- [x] Store userId and userName in localStorage after successful login ✅
+  - Updated `useStore.ts` login action to save to localStorage
+  - Stores both userId and userName for persistence
+- [x] Restore login state on app initialization ✅
+  - Checks localStorage for userId on app mount
+  - If userId exists, restores user state from localStorage
+  - Shows loading state while initializing
+- [x] Update App.tsx to check localStorage for userId ✅
+  - Initializes userId from localStorage if available
+  - Skips login screen if userId is found in localStorage
+- [x] Handle logout to clear localStorage ✅
+  - Clears userId and userName from localStorage on logout
+  - Ensures clean state on sign out
+
+#### Deliverable
+- User remains logged in after page refresh
+- Login state persists across browser sessions
+- User only needs to log in once per browser
+- Logout properly clears persisted state
+
+---
+
+### PR-55: Persist Consent on Refresh ✅
+**Estimated Effort**: 30 minutes
+**Status**: Complete
+
+#### Issue
+- When user refreshes the page, they need to re-consent
+- Consent should persist across page refreshes
+- User should not see consent screen again after they've consented
+
+#### Tasks:
+- [x] Check consent status on app initialization ✅
+  - When userId is restored from localStorage, checks consent from backend
+  - Uses profile endpoint which requires consent (403 if no consent)
+  - Sets hasConsent in store based on backend check
+- [x] Update App.tsx to check consent on mount ✅
+  - If userId exists in localStorage, fetches profile to check consent
+  - Sets hasConsent state from profile response (success = has consent)
+  - Skips consent screen if user has active consent
+- [x] Ensure consent screen only shows when needed ✅
+  - Only shows if userId exists but hasConsent is false
+  - Doesn't show if user has already consented
+
+#### Deliverable
+- User does not need to re-consent on page refresh
+- Consent status persists across browser sessions
+- Consent screen only shows when user hasn't consented
+- Backend consent status is checked on app load
+
+---
+
+### PR-56: Add Overarching AI Message with Actionable Recommendations ✅
+**Estimated Effort**: 1-2 hours
+**Status**: Complete
+
+#### Issue
+- Users need clear guidance on what they should be working on
+- Should show personalized actionable recommendations at the top of dashboard
+- Examples: debt payoff plan and amount per month, increase credit limit if income not aligned, etc.
+
+#### Tasks:
+- [x] Create AI message generation service/function ✅
+  - Created `overarchingMessageService.ts` to analyze user's persona, signals, and financial data
+  - Generates personalized actionable recommendations based on persona type
+  - Examples implemented:
+    - Debt payoff plan with monthly amount (High Utilization)
+    - Credit limit increase if income > credit limit (High Utilization)
+    - Emergency fund building (Variable Income)
+    - Subscription audit (Subscription Heavy)
+    - Savings rate optimization (Savings Builder, Lifestyle Creep)
+- [x] Create OverarchingMessage component ✅
+  - Created component to display AI-generated message prominently at top of dashboard
+  - Shows actionable items with clear formatting and priority colors
+  - Visually distinct with gradient background and priority badges
+- [x] Integrate into Dashboard ✅
+  - Added component at top of dashboard (after disclaimer, before persona card)
+  - Fetches message when component mounts
+  - Shows loading state while generating
+- [x] Backend endpoint for generating message ✅
+  - Created endpoint: `GET /api/overarching-message/:user_id`
+  - Uses persona signals and financial data to generate recommendations
+  - Returns structured message with actionable items (max 3 items)
+
+#### Deliverable
+- Prominent AI message at top of dashboard
+- Personalized actionable recommendations
+- Examples: debt payoff plans, credit limit suggestions, savings goals
+- Clear, actionable guidance for users
+
+---
+
+### PR-57: Hide Secondary Persona Box When No Secondary Personas ✅
+**Estimated Effort**: 15 minutes
+**Status**: Complete
+
+#### Issue
+- Secondary persona box shows "No secondary personas" message
+- Should hide the box entirely when user has no secondary personas
+- Only show secondary persona section when secondary personas exist
+
+#### Tasks:
+- [x] Update PersonaCard component ✅
+  - Removed "No secondary personas" fallback display
+  - Only renders secondary persona section if `persona.secondary_personas` exists and has length > 0
+  - Hides the entire section when no secondary personas
+- [x] Update HeroPersonaCard component ✅
+  - Removed "No secondary personas" fallback display
+  - Only renders secondary persona section if secondary personas exist
+  - Hides the entire section when no secondary personas
+
+#### Deliverable
+- Secondary persona box only shows when secondary personas exist
+- No "No secondary personas" message displayed
+- Clean UI when user has no secondary personas
+
+---
+
+### PR-58: Calculate Historical Persona Evaluations for Past Months ✅
+**Estimated Effort**: 2-3 hours
+**Status**: Complete
+
+#### Issue
+- Persona history only shows current month
+- Need to calculate persona assignments for past months
+- Should be a one-time operation to backfill historical data
+
+#### Tasks:
+- [x] Create script/endpoint to calculate historical personas ✅
+  - Created `backfillHistoricalPersonas.ts` script
+  - For each user, calculates persona for each past month (up to 12 months)
+  - Stores persona assignments with correct assigned_at dates (15th of each month)
+- [x] Create one-time migration script ✅
+  - Script to backfill historical personas for all users with active consent
+  - Checks if historical data already exists before calculating
+  - Only calculates for months that don't have persona assignments
+- [x] Store historical personas in database ✅
+  - Uses existing personas table with correct assigned_at dates
+  - Ensures secondary personas are also stored for historical data
+- [x] Add endpoint to trigger historical calculation ✅
+  - Admin endpoint: `POST /api/admin/backfill-historical-personas`
+  - Triggers backfill for all users (can specify months parameter)
+  - Useful for testing and one-time operations
+
+#### Deliverable
+- Historical persona assignments calculated for past months
+- One-time operation to backfill data
+- Persona history available for up to 12 months
+- Data stored with correct timestamps
+
+---
+
+### PR-59: Show Persona Evolution History in Timeline ✅
+**Estimated Effort**: 1 hour
+**Status**: Complete
+
+#### Issue
+- PersonaTimeline component only shows current month
+- Need to display full history of persona evolution
+- Should show how persona changed over time
+
+#### Tasks:
+- [x] Verify PersonaTimeline is fetching historical data ✅
+  - Confirmed `fetchPersonaHistory` is called with 12 months parameter
+  - Backend returns historical persona data from personas table
+- [x] PersonaTimeline display already shows historical data ✅
+  - Component already displays all historical persona assignments
+  - Shows timeline with dates and persona changes
+  - Displays month-by-month changes with clear visualization
+- [x] Timeline visualization already enhanced ✅
+  - Shows clear timeline with month-by-month changes
+  - Highlights persona transitions
+  - Shows narrative describing persona evolution
+- [x] Ready for testing with historical data ✅
+  - Timeline will show multiple months once PR-58 backfill is run
+  - Persona changes will be displayed correctly
+  - Uses data from PR-58 backfill script
+
+#### Deliverable
+- Persona evolution timeline shows full history
+- Multiple months of persona data displayed
+- Clear visualization of persona changes over time
+- Historical secondary personas shown
+
+---
+
 ## 🐛 Post-Launch Bug Fixes & Improvements
 
 ### Nov 7, 2024 - AI Chat Improvements

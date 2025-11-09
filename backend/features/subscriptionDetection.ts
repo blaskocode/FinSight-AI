@@ -259,11 +259,14 @@ export async function calculateSubscriptionShare(
  */
 export async function getSubscriptionAnalysis(
   userId: string,
-  windowDays: number = 90
+  windowDays: number = 90,
+  asOfDate?: Date
 ): Promise<SubscriptionAnalysis> {
-  const cutoffDate = new Date();
+  const baseDate = asOfDate || new Date();
+  const cutoffDate = new Date(baseDate);
   cutoffDate.setDate(cutoffDate.getDate() - windowDays);
   const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
+  const endDateStr = baseDate.toISOString().split('T')[0];
 
   // Get total spend
   const totalSpendResult = await all<{ total: number }>(

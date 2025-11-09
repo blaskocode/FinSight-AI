@@ -35,7 +35,6 @@ const personaTaglines: Record<string, string> = {
 export function HeroPersonaCard({ persona }: HeroPersonaCardProps) {
   const config = getPersonaConfig(persona.type);
   const Icon = config.icon;
-  const confidencePercentage = Math.round(persona.confidence * 100);
   const [isVisible, setIsVisible] = useState(false);
   const [iconPulse, setIconPulse] = useState(false);
 
@@ -109,48 +108,34 @@ export function HeroPersonaCard({ persona }: HeroPersonaCardProps) {
                   {config.displayName}
                 </span>
 
-                {/* Secondary Personas */}
-                {persona.secondary_personas && persona.secondary_personas.length > 0 && (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm text-white/80">Also:</span>
-                    {persona.secondary_personas.map((secondaryType, index) => {
-                      const secondaryConfig = getPersonaConfig(secondaryType);
-                      const SecondaryIcon = secondaryConfig.icon;
-                      return (
-                        <span
-                          key={index}
-                          className="group relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-white/15 backdrop-blur-sm border border-white/30 text-white hover:bg-white/25 transition-all cursor-help"
-                          title={secondaryConfig.description}
-                          aria-label={`Secondary persona: ${secondaryConfig.displayName}. ${secondaryConfig.description}`}
-                        >
-                          <SecondaryIcon className="w-4 h-4" aria-hidden="true" />
-                          {secondaryConfig.displayName}
-                          {/* Tooltip */}
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20 shadow-xl">
-                            {secondaryConfig.description}
-                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
-                          </div>
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
             </div>
           </div>
 
-          {/* Right Side: Confidence Score */}
-          <div className="text-center md:text-right">
-            <div className="inline-block bg-white/20 backdrop-blur-sm rounded-2xl p-6 border-2 border-white/30 shadow-xl">
-              <div className="text-sm text-white/90 mb-1 font-medium">Confidence</div>
-              <div className="text-5xl font-bold text-white drop-shadow-lg">
-                {confidencePercentage}%
-              </div>
-              <div className="text-xs text-white/70 mt-2">
-                {persona.criteria_met.length} criteria met
+          {/* Right Side: Secondary Personas (replacing confidence) - Only show if secondary personas exist */}
+          {persona.secondary_personas && persona.secondary_personas.length > 0 && (
+            <div className="text-center md:text-right">
+              <div className="inline-block bg-white/20 backdrop-blur-sm rounded-2xl p-6 border-2 border-white/30 shadow-xl">
+                <div className="text-sm text-white/90 mb-3 font-medium">Also Applies</div>
+                <div className="flex flex-col gap-2 items-center md:items-end">
+                  {persona.secondary_personas.map((secondaryType, index) => {
+                    const secondaryConfig = getPersonaConfig(secondaryType);
+                    const SecondaryIcon = secondaryConfig.icon;
+                    return (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-white/15 backdrop-blur-sm border border-white/30 text-white"
+                        aria-label={`Secondary persona: ${secondaryConfig.displayName}`}
+                      >
+                        <SecondaryIcon className="w-4 h-4" aria-hidden="true" />
+                        {secondaryConfig.displayName}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Focus Area */}

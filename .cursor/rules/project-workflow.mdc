@@ -64,7 +64,7 @@ alwaysApply: true
 
 ---
 
-## Rule 3: Memory Bank Maintenance - MANDATORY
+## Rule 3: Memory Bank and Task List Maintenance - MANDATORY
 
 **CRITICAL**: After EVERY SINGLE PROMPT, you must check if the memory bank needs updates and update it immediately if needed. You must also check if the task list has been updated. You must show me a message confirming that task list and memory bank have been updated.
 

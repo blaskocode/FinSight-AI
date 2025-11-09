@@ -182,12 +182,37 @@ export async function getCurrentPersona(userId: string): Promise<{
     return null;
   }
 
+  // Safely parse signals JSON
+  let parsedSignals: any = {};
+  try {
+    if (persona.signals) {
+      parsedSignals = JSON.parse(persona.signals);
+    }
+  } catch (e) {
+    console.error(`Error parsing signals for persona ${persona.persona_id}:`, e);
+    parsedSignals = {};
+  }
+
+  // Safely parse secondary personas JSON
+  let parsedSecondaryPersonas: string[] = [];
+  try {
+    if (persona.secondary_personas) {
+      parsedSecondaryPersonas = JSON.parse(persona.secondary_personas);
+      if (!Array.isArray(parsedSecondaryPersonas)) {
+        parsedSecondaryPersonas = [];
+      }
+    }
+  } catch (e) {
+    console.error(`Error parsing secondary_personas for persona ${persona.persona_id}:`, e);
+    parsedSecondaryPersonas = [];
+  }
+
   return {
     persona_id: persona.persona_id,
     persona_type: persona.persona_type,
     assigned_at: persona.assigned_at,
-    signals: JSON.parse(persona.signals),
-    secondary_personas: persona.secondary_personas ? JSON.parse(persona.secondary_personas) : []
+    signals: parsedSignals,
+    secondary_personas: parsedSecondaryPersonas
   };
 }
 

@@ -20,14 +20,52 @@
 ### ✅ Phase 5 - COMPLETE (PR-34 through PR-43)
 **Status**: All Phase 5 PRs complete! PR-34, PR-35, PR-36, PR-37, PR-38, PR-39, PR-40, PR-41, PR-42, and PR-43 all finished. All feature detection tests (53), business logic tests (34), and integration tests (55) passing. Total: 142 tests (138 passing). Performance optimizations, comprehensive error handling, complete documentation, API documentation, decision log/limitations documentation, demo materials, and final polish all complete. All audits passed: Security ✅, Accessibility ✅ (WCAG 2.1 AA), Performance ✅, UI/UX ✅. Application is production-ready! 🚀
 
-### ✅ Post-Launch Features (PR-44 through PR-49) - COMPLETE
-**Status**: All six PRs complete!
+### ✅ Post-Launch Features (PR-44 through PR-51) - COMPLETE
+**Status**: All eight PRs complete!
 - **PR-46**: Username/Password Authentication ✅ - Login screen with username/password, backend login endpoint, username utility
 - **PR-44**: User Name Display & Sign Out ✅ - Dashboard header shows name, sign out button (user switching removed in PR-48)
 - **PR-45**: Per-User Onboarding Flow ✅ - Onboarding per-user (localStorage key with userId)
 - **PR-47**: Remove Recommendation Update Toasts ✅ - Removed unnecessary toast notifications, loading states show properly
 - **PR-48**: Remove Chat Toasts & User Switcher ✅ - Removed chat toasts, removed user switcher dropdown, simplified header with sign out only
 - **PR-49**: Add Logout Confirmation Dialog ✅ - Confirmation dialog before sign out, prevents accidental logouts
+- **PR-50**: Fix Chart Visualization Issues ✅ - Fixed pie chart labels (legend), fixed bar chart legend positioning and axis centering. Increased chart height and spacing to prevent legend overlap with "Top Merchants" section.
+- **PR-51**: Re-categorize ACH Transfers ✅ - Excluded credit card payments, rent, mortgage, utilities from top merchants and unusual spending alerts. Fixed by deleting outdated compiled JS file - backend now uses TypeScript file correctly. Verified working after backend restart.
+- **PR-52**: Replace Confidence with Secondary Personas Display ✅ - Removed confidence level display from persona cards. Replaced with secondary personas display in the same space. Secondary personas now prominently displayed where confidence used to be.
+- **PR-53**: Clear Chat Input After Sending Message ✅ - Fixed chat input not clearing after sending message. Input now clears immediately when send button is clicked or Enter is pressed. Fixed handleSuggestedQuestion to clear input.
+- **PR-54**: Persist Logged In User on Refresh ✅ - Store userId/userName in localStorage, restore on app init, skip login screen if user is already logged in.
+- **PR-55**: Persist Consent on Refresh ✅ - Check consent status on app initialization, skip consent screen if user has already consented.
+- **PR-56**: Add Overarching AI Message with Actionable Recommendations ✅ - Show prominent AI message at top of dashboard with personalized actionable recommendations (debt payoff plans, credit limit suggestions, etc.).
+- **PR-57**: Hide Secondary Persona Box When No Secondary Personas ✅ - Hide secondary persona section entirely when user has no secondary personas.
+- **PR-58**: Calculate Historical Persona Evaluations for Past Months ✅ - One-time operation to backfill historical persona assignments for past months (up to 12 months).
+- **PR-59**: Show Persona Evolution History in Timeline ✅ - PersonaTimeline component displays full history of persona evolution (ready once PR-58 backfill is run).
+
+### ✅ Recent Bug Fixes & Improvements (Nov 7, 2024)
+**Status**: Fixed multiple issues with overarching AI message and persona history display.
+
+**Overarching Message Service Improvements:**
+- Now considers existing recommendations when generating messages
+- Fetches recommendations and references them in message text
+- Messages now say "We also have X detailed recommendations below" when recommendations exist
+- Fixed savings_builder persona logic to work with actual signal fields (`emergencyFundCoverage`, `savingsGrowthRate`, `monthlyInflow`, `totalSavingsBalance`)
+- Terry Kim now gets actionable items (emergency fund recommendation for 5.02 months < 6 months target)
+- Improved debt payoff message clarity (shows debt source, income, payment percentage)
+
+**Frontend Component Fixes:**
+- Fixed duplicate API calls in OverarchingMessage and PersonaTimeline (React StrictMode issue)
+- Added `useRef` to prevent duplicate calls
+- Reordered Dashboard: persona card first, then AI Action Plan, then rest
+- Added comprehensive debug logging for easier troubleshooting
+
+**Persona History Fixes:**
+- Fixed to show all persona history, not just current month
+- Changed query to fetch all history first, then filter in memory
+- Improved grouping logic to show all assignments over time
+- Added safe JSON parsing to prevent crashes from invalid data
+
+**Error Handling Improvements:**
+- Added safe JSON parsing in `getCurrentPersona` and `getPersonaHistory`
+- Better error messages in frontend components
+- Improved error display (yellow warning box instead of silent failure)
 
 ### ✅ MVP - PR-1: Project Foundation & Setup (COMPLETE)
 - Monorepo structure with backend, frontend, shared, and data-gen directories
@@ -55,7 +93,7 @@
 
 ## What's Left to Build
 
-### ✅ Post-Launch Features (PR-44 through PR-49) - COMPLETE
+### ✅ Post-Launch Features (PR-44 through PR-51) - COMPLETE
 - [x] **PR-46**: Username/Password Authentication ✅
   - Created login endpoint: `POST /api/auth/login`
   - Username utility: `backend/utils/username.ts` (generateUsername, findUserByUsername)
@@ -86,6 +124,30 @@
   - Added confirmation dialog before sign out
   - Prevents accidental logouts
   - User must confirm before logout takes effect
+- [x] **PR-50**: Fix Chart Visualization Issues ✅
+  - Fixed pie chart overlapping labels by using legend instead
+  - Fixed bar chart legend positioning (moved to top)
+  - Fixed axis label centering
+  - Increased chart height (300px → 350px) and adjusted spacing to prevent legend overlap with "Top Merchants"
+- [x] **PR-51**: Re-categorize ACH Transfers ✅
+  - Created `isACHTransfer()` function
+  - Excluded ACH transfers from top merchants
+  - Excluded ACH transfers from unusual spending alerts
+  - Fixed issue: Deleted outdated compiled JS file (`spendingAnalysisService.js`) so backend uses TypeScript file
+  - Added debug logging to verify filtering is working
+- [x] **PR-52**: Replace Confidence with Secondary Personas Display ✅
+  - Removed confidence level display from PersonaCard
+  - Removed confidence level display from HeroPersonaCard
+  - Replaced with secondary personas display in same space
+  - Removed duplicate secondary personas display next to primary badge
+  - Secondary personas now prominently displayed where confidence used to be
+  - Shows "No secondary personas" message when none exist
+- [x] **PR-53**: Clear Chat Input After Sending Message ✅
+  - Fixed chat input not clearing after sending message
+  - Input clears immediately on send button click (handleSend)
+  - Input clears immediately on Enter key press
+  - Fixed handleSuggestedQuestion to clear input instead of showing question text
+  - Input stays clear while message is being sent
 - [x] **PR-44**: User Name Display & Sign Out ✅
   - Backend profile endpoint includes name and email
   - Dashboard header displays user name (falls back to user ID)

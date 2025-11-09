@@ -44,6 +44,7 @@ export function ChatWindow({ userId, onClose }: ChatWindowProps) {
     if (!inputValue.trim() || isLoading) return;
 
     const userMessage = inputValue.trim();
+    // Clear input immediately before sending
     setInputValue('');
 
     await sendMessage(userId, userMessage);
@@ -57,7 +58,8 @@ export function ChatWindow({ userId, onClose }: ChatWindowProps) {
   };
 
   const handleSuggestedQuestion = async (question: string) => {
-    setInputValue(question);
+    // Clear input immediately before sending
+    setInputValue('');
     await sendMessage(userId, question);
   };
 

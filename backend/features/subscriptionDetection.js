@@ -184,10 +184,12 @@ async function calculateSubscriptionShare(userId, windowDays = 90) {
  * @param windowDays - Analysis window in days (default: 90)
  * @returns Complete subscription analysis
  */
-async function getSubscriptionAnalysis(userId, windowDays = 90) {
-    const cutoffDate = new Date();
+async function getSubscriptionAnalysis(userId, windowDays = 90, asOfDate) {
+    const baseDate = asOfDate || new Date();
+    const cutoffDate = new Date(baseDate);
     cutoffDate.setDate(cutoffDate.getDate() - windowDays);
     const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
+    const endDateStr = baseDate.toISOString().split('T')[0];
     // Get total spend
     const totalSpendResult = await (0, db_1.all)(`SELECT ABS(SUM(t.amount)) as total
      FROM transactions t

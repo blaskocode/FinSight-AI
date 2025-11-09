@@ -42,3 +42,6 @@ fetch(`http://localhost:3002/api/profile/${userId}`, {
 console.log('Check above for any red error messages');
 ```
 
+
+
+

@@ -564,3 +564,24 @@ export async function fetchSpendingAnalysis(
   return response.data;
 }
 
+export interface OverarchingMessageResponse {
+  message: string;
+  actionableItems: ActionableItem[];
+}
+
+export interface ActionableItem {
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+/**
+ * Fetch overarching message with actionable recommendations
+ */
+export async function fetchOverarchingMessage(userId: string): Promise<OverarchingMessageResponse> {
+  return retryApiCall(async () => {
+    const response = await api.get<OverarchingMessageResponse>(`/overarching-message/${userId}`);
+    return response.data;
+  });
+}
+

@@ -112,7 +112,8 @@ export async function calculateUtilization(accountId: string): Promise<Utilizati
  */
 export async function detectMinimumPaymentOnly(
   accountId: string,
-  windowDays: number = 90
+  windowDays: number = 90,
+  asOfDate?: Date
 ): Promise<boolean> {
   // Get liability information
   const liability = await get<{
@@ -135,9 +136,11 @@ export async function detectMinimumPaymentOnly(
   const isMinimumPayment = Math.abs(lastPayment - minPayment) <= tolerance;
 
   // Also check recent payment transactions
-  const cutoffDate = new Date();
+  const baseDate = asOfDate || new Date();
+  const cutoffDate = new Date(baseDate);
   cutoffDate.setDate(cutoffDate.getDate() - windowDays);
   const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
+  const endDateStr = baseDate.toISOString().split('T')[0];
 
   const payments = await all<{
     amount: number;
@@ -149,9 +152,10 @@ export async function detectMinimumPaymentOnly(
        AND personal_finance_category_detailed = 'CREDIT_CARD_PAYMENT'
        AND amount < 0
        AND date >= ?
+       AND date <= ?
      ORDER BY date DESC
      LIMIT 3`,
-    [accountId, cutoffDateStr]
+    [accountId, cutoffDateStr, endDateStr]
   );
 
   // If we have payment transactions, check if they're all close to minimum
@@ -176,7 +180,8 @@ export async function detectMinimumPaymentOnly(
  */
 export async function calculateInterestCharges(
   accountId: string,
-  windowDays: number = 90
+  windowDays: number = 90,
+  asOfDate?: Date
 ): Promise<InterestChargesResult> {
   // Get liability APR
   const liability = await get<{
@@ -195,9 +200,11 @@ export async function calculateInterestCharges(
   }
 
   // Calculate date range
-  const cutoffDate = new Date();
+  const baseDate = asOfDate || new Date();
+  const cutoffDate = new Date(baseDate);
   cutoffDate.setDate(cutoffDate.getDate() - windowDays);
   const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
+  const endDateStr = baseDate.toISOString().split('T')[0];
 
   // Get account balance history (simplified - using current balance and APR)
   // In a real system, we'd track monthly balances and calculate interest per month
@@ -230,8 +237,9 @@ export async function calculateInterestCharges(
             OR merchant_name LIKE '%Interest Charge%'
             OR personal_finance_category_detailed LIKE '%INTEREST%')
        AND amount < 0
-       AND date >= ?`,
-    [accountId, cutoffDateStr]
+       AND date >= ?
+       AND date <= ?`,
+    [accountId, cutoffDateStr, endDateStr]
   );
 
   // Only use actual transactions - no estimation for historical analysis
@@ -255,7 +263,7 @@ export async function calculateInterestCharges(
  * @param accountId - The credit card account ID
  * @returns True if overdue
  */
-export async function checkOverdueStatus(accountId: string): Promise<boolean> {
+export async function checkOverdueStatus(accountId: string, asOfDate?: Date): Promise<boolean> {
   const liability = await get<{
     is_overdue: number;
     next_payment_due_date: string;
@@ -295,7 +303,8 @@ export async function checkOverdueStatus(accountId: string): Promise<boolean> {
  */
 export async function getCreditSignals(
   accountId: string,
-  windowDays: number = 90
+  windowDays: number = 90,
+  asOfDate?: Date
 ): Promise<{
   utilization: UtilizationResult;
   minimumPaymentOnly: boolean;
@@ -304,9 +313,9 @@ export async function getCreditSignals(
 }> {
   const [utilization, minimumPaymentOnly, interestCharges, isOverdue] = await Promise.all([
     calculateUtilization(accountId),
-    detectMinimumPaymentOnly(accountId, windowDays),
-    calculateInterestCharges(accountId, windowDays),
-    checkOverdueStatus(accountId)
+    detectMinimumPaymentOnly(accountId, windowDays, asOfDate),
+    calculateInterestCharges(accountId, windowDays, asOfDate),
+    checkOverdueStatus(accountId, asOfDate)
   ]);
 
   return {

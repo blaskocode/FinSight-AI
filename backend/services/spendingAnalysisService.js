@@ -88,9 +88,51 @@ async function getSpendingAnalysis(userId, months = 6) {
             return a.year - b.year;
         return a.monthIndex - b.monthIndex;
     });
-    // Top merchants
+    // Helper function to check if transaction is an ACH transfer
+    const isACHTransfer = (tx) => {
+        const merchant = (tx.merchant_name || '').toLowerCase();
+        const categoryPrimary = (tx.personal_finance_category_primary || '').toUpperCase();
+        const categoryDetailed = (tx.personal_finance_category_detailed || '').toUpperCase();
+        // Credit card payments
+        if (merchant.includes('credit card payment') ||
+            categoryDetailed === 'CREDIT_CARD_PAYMENT' ||
+            categoryPrimary === 'TRANSFER_OUT') {
+            return true;
+        }
+        // Rent payments
+        if (merchant.includes('rent payment') ||
+            merchant.includes('rent') && merchant.includes('payment')) {
+            return true;
+        }
+        // Mortgage payments
+        if (merchant.includes('mortgage') ||
+            merchant.includes('loan payment') ||
+            categoryDetailed.includes('MORTGAGE')) {
+            return true;
+        }
+        // Utilities (RENT_AND_UTILITIES category, but only if it's a utility payment)
+        if (categoryDetailed === 'RENT_AND_UTILITIES') {
+            // Check if it's a utility company name
+            const utilityKeywords = ['electric', 'gas', 'water', 'sewer', 'trash', 'utility', 'power', 'energy'];
+            if (utilityKeywords.some(keyword => merchant.includes(keyword))) {
+                return true;
+            }
+            // If merchant is "Rent Payment", it's rent, not utilities
+            if (merchant.includes('rent payment')) {
+                return true;
+            }
+        }
+        return false;
+    };
+    // Top merchants (exclude ACH transfers)
     const merchantMap = new Map();
+    let achTransferCount = 0;
     expenses.forEach(tx => {
+        // Skip ACH transfers
+        if (isACHTransfer(tx)) {
+            achTransferCount++;
+            return;
+        }
         const merchant = tx.merchant_name || 'Unknown';
         const amount = Math.abs(tx.amount);
         const existing = merchantMap.get(merchant) || { total: 0, count: 0 };
@@ -99,6 +141,10 @@ async function getSpendingAnalysis(userId, months = 6) {
             count: existing.count + 1
         });
     });
+    // Debug logging
+    if (achTransferCount > 0) {
+        console.log(`[SpendingAnalysis] Excluded ${achTransferCount} ACH transfer transactions from top merchants`);
+    }
     const topMerchants = Array.from(merchantMap.entries())
         .map(([merchant_name, data]) => ({
         merchant_name,
@@ -108,24 +154,34 @@ async function getSpendingAnalysis(userId, months = 6) {
     }))
         .sort((a, b) => b.total - a.total)
         .slice(0, 10); // Top 10
-    // Detect unusual spending (outliers)
-    const amounts = expenses.map(tx => Math.abs(tx.amount));
-    const mean = amounts.reduce((sum, amt) => sum + amt, 0) / amounts.length;
-    const variance = amounts.reduce((sum, amt) => sum + Math.pow(amt - mean, 2), 0) / amounts.length;
-    const stdDev = Math.sqrt(variance);
-    const threshold = mean + (2 * stdDev); // 2 standard deviations
-    const unusualSpending = expenses
-        .filter(tx => Math.abs(tx.amount) > threshold)
-        .map(tx => ({
-        transaction_id: tx.transaction_id,
-        date: tx.date,
-        merchant_name: tx.merchant_name,
-        amount: Math.abs(tx.amount),
-        category: tx.personal_finance_category_detailed || tx.personal_finance_category_primary || null,
-        reason: `Spending of $${Math.abs(tx.amount).toFixed(2)} is significantly higher than your average of $${mean.toFixed(2)}`
-    }))
-        .sort((a, b) => b.amount - a.amount)
-        .slice(0, 10); // Top 10 unusual transactions
+    // Detect unusual spending (outliers) - exclude ACH transfers
+    const merchantExpenses = expenses.filter(tx => !isACHTransfer(tx));
+    const achInUnusual = expenses.length - merchantExpenses.length;
+    const amounts = merchantExpenses.map(tx => Math.abs(tx.amount));
+    // Debug logging
+    if (achInUnusual > 0) {
+        console.log(`[SpendingAnalysis] Excluded ${achInUnusual} ACH transfer transactions from unusual spending alerts`);
+    }
+    // Only calculate if we have merchant expenses
+    let unusualSpending = [];
+    if (amounts.length > 0) {
+        const mean = amounts.reduce((sum, amt) => sum + amt, 0) / amounts.length;
+        const variance = amounts.reduce((sum, amt) => sum + Math.pow(amt - mean, 2), 0) / amounts.length;
+        const stdDev = Math.sqrt(variance);
+        const threshold = mean + (2 * stdDev); // 2 standard deviations
+        unusualSpending = merchantExpenses
+            .filter(tx => Math.abs(tx.amount) > threshold)
+            .map(tx => ({
+            transaction_id: tx.transaction_id,
+            date: tx.date,
+            merchant_name: tx.merchant_name,
+            amount: Math.abs(tx.amount),
+            category: tx.personal_finance_category_detailed || tx.personal_finance_category_primary || null,
+            reason: `Spending of $${Math.abs(tx.amount).toFixed(2)} is significantly higher than your average of $${mean.toFixed(2)}`
+        }))
+            .sort((a, b) => b.amount - a.amount)
+            .slice(0, 10); // Top 10 unusual transactions
+    }
     const averageMonthlySpending = totalSpending / months;
     const averageMonthlyIncome = totalIncome / months;
     return {

@@ -16,7 +16,6 @@ interface PersonaCardProps {
 export function PersonaCard({ persona }: PersonaCardProps) {
   const config = getPersonaConfig(persona.type);
   const Icon = config.icon;
-  const confidencePercentage = Math.round(persona.confidence * 100);
 
   return (
     <div className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${config.color.accent} hover:shadow-lg transition-shadow`}>
@@ -39,37 +38,32 @@ export function PersonaCard({ persona }: PersonaCardProps) {
                 {config.displayName}
               </span>
 
-              {/* Secondary Personas */}
-              {persona.secondary_personas && persona.secondary_personas.length > 0 && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs text-gray-500">Also:</span>
-                  {persona.secondary_personas.map((secondaryType, index) => {
-                    const secondaryConfig = getPersonaConfig(secondaryType);
-                    const SecondaryIcon = secondaryConfig.icon;
-                    return (
-                      <span
-                        key={index}
-                        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border ${secondaryConfig.color.bg} ${secondaryConfig.color.text} ${secondaryConfig.color.border}`}
-                        aria-label={`Secondary persona: ${secondaryConfig.displayName}`}
-                      >
-                        <SecondaryIcon className="w-3 h-3" aria-hidden="true" />
-                        {secondaryConfig.displayName}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Confidence Score */}
-        <div className="text-right ml-4">
-          <div className="text-sm text-gray-500">Confidence</div>
-          <div className={`text-2xl font-bold ${config.color.text}`}>
-            {confidencePercentage}%
+        {/* Secondary Personas (replacing confidence) - Only show if secondary personas exist */}
+        {persona.secondary_personas && persona.secondary_personas.length > 0 && (
+          <div className="text-right ml-4">
+            <div className="text-sm text-gray-500 mb-2">Also Applies</div>
+            <div className="flex flex-col gap-2 items-end">
+              {persona.secondary_personas.map((secondaryType, index) => {
+                const secondaryConfig = getPersonaConfig(secondaryType);
+                const SecondaryIcon = secondaryConfig.icon;
+                return (
+                  <span
+                    key={index}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border ${secondaryConfig.color.bg} ${secondaryConfig.color.text} ${secondaryConfig.color.border}`}
+                    aria-label={`Secondary persona: ${secondaryConfig.displayName}`}
+                  >
+                    <SecondaryIcon className="w-4 h-4" aria-hidden="true" />
+                    {secondaryConfig.displayName}
+                  </span>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Description */}

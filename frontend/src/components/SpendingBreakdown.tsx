@@ -186,19 +186,19 @@ export const SpendingBreakdown = memo(function SpendingBreakdown({ userId }: Spe
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Pie Chart - Category Breakdown */}
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Spending by Category</h3>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={350}>
             <PieChart>
               <Pie
                 data={pieData}
                 cx="50%"
-                cy="50%"
+                cy="45%"
                 labelLine={false}
-                label={({ name, percentage }) => `${name}: ${percentage.toFixed(1)}%`}
-                outerRadius={100}
+                label={false}
+                outerRadius={90}
                 fill="#8884d8"
                 dataKey="value"
               >
@@ -207,6 +207,12 @@ export const SpendingBreakdown = memo(function SpendingBreakdown({ userId }: Spe
                 ))}
               </Pie>
               <Tooltip content={<CustomPieTooltip />} />
+              <Legend 
+                verticalAlign="bottom" 
+                height={80}
+                wrapperStyle={{ paddingTop: '20px' }}
+                formatter={(value, entry: any) => `${value}: ${entry.payload.percentage.toFixed(1)}%`}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -220,14 +226,18 @@ export const SpendingBreakdown = memo(function SpendingBreakdown({ userId }: Spe
               <XAxis 
                 dataKey="month" 
                 tick={{ fontSize: 12 }}
-                label={{ value: 'Month', position: 'insideBottom', offset: -5 }}
+                label={{ value: 'Month', position: 'insideBottom', offset: 0 }}
               />
               <YAxis 
                 tick={{ fontSize: 12 }}
-                label={{ value: 'Amount ($)', angle: -90, position: 'insideLeft' }}
+                label={{ value: 'Amount ($)', angle: -90, position: 'insideLeft', offset: 0 }}
               />
               <Tooltip content={<CustomBarTooltip />} />
-              <Legend />
+              <Legend 
+                verticalAlign="top" 
+                height={36}
+                wrapperStyle={{ paddingTop: '10px' }}
+              />
               <Bar dataKey="income" fill="#10B981" name="Income" />
               <Bar dataKey="expenses" fill="#EF4444" name="Expenses" />
             </BarChart>
@@ -236,7 +246,7 @@ export const SpendingBreakdown = memo(function SpendingBreakdown({ userId }: Spe
       </div>
 
       {/* Top Merchants and Unusual Spending */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
         {/* Top Merchants */}
         <div>
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">

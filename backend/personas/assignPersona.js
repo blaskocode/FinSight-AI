@@ -134,12 +134,37 @@ async function getCurrentPersona(userId) {
     if (!persona) {
         return null;
     }
+    // Safely parse signals JSON
+    let parsedSignals = {};
+    try {
+        if (persona.signals) {
+            parsedSignals = JSON.parse(persona.signals);
+        }
+    }
+    catch (e) {
+        console.error(`Error parsing signals for persona ${persona.persona_id}:`, e);
+        parsedSignals = {};
+    }
+    // Safely parse secondary personas JSON
+    let parsedSecondaryPersonas = [];
+    try {
+        if (persona.secondary_personas) {
+            parsedSecondaryPersonas = JSON.parse(persona.secondary_personas);
+            if (!Array.isArray(parsedSecondaryPersonas)) {
+                parsedSecondaryPersonas = [];
+            }
+        }
+    }
+    catch (e) {
+        console.error(`Error parsing secondary_personas for persona ${persona.persona_id}:`, e);
+        parsedSecondaryPersonas = [];
+    }
     return {
         persona_id: persona.persona_id,
         persona_type: persona.persona_type,
         assigned_at: persona.assigned_at,
-        signals: JSON.parse(persona.signals),
-        secondary_personas: persona.secondary_personas ? JSON.parse(persona.secondary_personas) : []
+        signals: parsedSignals,
+        secondary_personas: parsedSecondaryPersonas
     };
 }
 /**
@@ -408,6 +433,8 @@ async function calculateComprehensiveMetrics(userId) {
  * @returns Primary persona assignment and secondary personas, or null if none match
  */
 async function assignPersona(userId) {
+    console.log('🟢 assignPersona() STARTED for user:', userId);
+    console.log('🟢 This is the NEW CODE with comprehensive metrics!');
     // Try all personas in priority order
     const assignments = [];
     // 1. High Utilization (highest priority)
@@ -456,12 +483,16 @@ async function assignPersona(userId) {
     const secondary = assignments.slice(1);
     // Calculate comprehensive metrics and merge them into primary persona signals
     // This ensures the AI chat has access to all metrics, not just persona-specific ones
+    console.log('🔍 Calculating comprehensive metrics for user:', userId);
     const comprehensiveMetrics = await calculateComprehensiveMetrics(userId);
+    console.log('📊 Comprehensive metrics calculated:', Object.keys(comprehensiveMetrics));
+    console.log('📊 Full metrics:', JSON.stringify(comprehensiveMetrics, null, 2));
     primary.signals = {
         ...primary.signals,
         ...comprehensiveMetrics,
         criteriaMet: primary.criteriaMet,
         confidence: primary.confidence
     };
+    console.log('✅ Final persona signals:', Object.keys(primary.signals));
     return { primary, secondary };
 }

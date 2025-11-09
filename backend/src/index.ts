@@ -179,14 +179,21 @@ app.get('/api/profile/:user_id', requireConsent, async (req: Request, res: Respo
     console.log('🔍 Existing persona:', currentPersona ? 'EXISTS' : 'NONE');
 
     // TEMPORARY: Force recalculation to test new comprehensive metrics code
-    const FORCE_RECALC = true;
+    const FORCE_RECALC = false; // Changed to false to preserve historical personas
     
     // If no persona assigned or we want to recalculate, assign persona
     if (!currentPersona || FORCE_RECALC) {
       if (FORCE_RECALC && currentPersona) {
         console.log('🔄 FORCE RECALCULATING PERSONA (testing mode)');
-        // Delete existing persona to recalculate
-        await run('DELETE FROM personas WHERE user_id = ?', [userId]);
+        // Only delete the most recent persona, not all historical ones
+        // This preserves the persona history timeline
+        const mostRecentPersona = await get<{ persona_id: string }>(
+          'SELECT persona_id FROM personas WHERE user_id = ? ORDER BY assigned_at DESC LIMIT 1',
+          [userId]
+        );
+        if (mostRecentPersona) {
+          await run('DELETE FROM personas WHERE persona_id = ?', [mostRecentPersona.persona_id]);
+        }
       }
       console.log('🚀 ASSIGNING NEW PERSONA for user:', userId);
       const result = await assignPersona(userId);
@@ -408,6 +415,19 @@ app.get('/api/persona-history/:user_id', requireConsent, async (req, res) => {
   }
 });
 
+// Overarching Message Endpoint - Get personalized actionable recommendations
+app.get('/api/overarching-message/:user_id', requireConsent, async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.user_id;
+    const { generateOverarchingMessage } = await import('../services/overarchingMessageService');
+    const message = await generateOverarchingMessage(userId);
+    res.json(message);
+  } catch (error: any) {
+    console.error('Error generating overarching message:', error);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
+});
+
 // Spending Analysis Endpoint
 app.get('/api/spending-analysis/:user_id', requireConsent, async (req, res) => {
   const { user_id: userId } = req.params;
@@ -423,6 +443,43 @@ app.get('/api/spending-analysis/:user_id', requireConsent, async (req, res) => {
   } catch (error: any) {
     console.error('Error fetching spending analysis:', error);
     res.status(500).json({ error: error.message || 'Failed to fetch spending analysis' });
+  }
+});
+
+// Backfill Historical Personas Endpoint (Admin only - one-time operation)
+// Returns immediately and runs in background to avoid hanging
+app.post('/api/admin/backfill-historical-personas', async (req: Request, res: Response) => {
+  try {
+    const { months, user_id } = req.body;
+    const monthsBack = months || 12;
+    
+    // Return immediately - backfill runs in background
+    res.json({ 
+      success: true, 
+      message: `Historical persona backfill started for ${user_id ? 'user' : 'all users'} (${monthsBack} months). Check server logs for progress.` 
+    });
+    
+    // Run backfill in background (don't await)
+    (async () => {
+      try {
+        if (user_id) {
+          // Backfill single user
+          const { backfillUserPersonas } = await import('../scripts/backfillHistoricalPersonas');
+          await backfillUserPersonas(user_id, monthsBack);
+          console.log(`✅ Backfill complete for user: ${user_id}`);
+        } else {
+          // Backfill all users
+          const { backfillAllHistoricalPersonas } = await import('../scripts/backfillHistoricalPersonas');
+          await backfillAllHistoricalPersonas(monthsBack);
+          console.log(`✅ Backfill complete for all users`);
+        }
+      } catch (error: any) {
+        console.error('Error in background backfill:', error);
+      }
+    })();
+  } catch (error: any) {
+    console.error('Error starting backfill:', error);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 });
 
