@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: finsight-ai
+    env: node
+    region: oregon
+    plan: standard
+    buildCommand: npm run install:all && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: /opt/render/project/.data/finsight.db
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+    disk:
+      name: finsight-data
+      mountPath: /opt/render/project/.data
+      sizeGB: 1
+

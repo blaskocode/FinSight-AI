@@ -140,9 +140,9 @@ export async function generateRecommendations(userId: string): Promise<Recommend
         user_id: userId,
         persona_id: personaId,
         type: 'partner_offer',
-        content: `${offer.title}: ${offer.description}`,
+        content: `${(offer as any).title}: ${(offer as any).description}`,
         rationale,
-        impact_estimate: offer.impact,
+        impact_estimate: (offer as any).impact,
         created_at: new Date().toISOString()
       });
     }

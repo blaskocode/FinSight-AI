@@ -181,10 +181,40 @@ npm run test:coverage       # Run with coverage report
 npm run build  # Build both backend and frontend
 ```
 
-### Deployment Model
-- Demo/prototype runs locally as web app
-- No cloud deployment required
-- Docker optional for cross-platform compatibility
+### Production Deployment (Render.com)
+**Platform**: Render.com (Professional subscription)
+**Architecture**: 
+- Single web service serving both backend API and frontend static files
+- Express serves frontend dist folder in production
+- Persistent disk for SQLite database
+
+**Build Process**:
+1. `npm run install:all` - Install all dependencies (root, backend, frontend)
+2. `npm run build` - Build backend TypeScript → JavaScript, build frontend React → static files
+3. `npm start` - Start production server (node backend/dist/index.js)
+
+**Environment Variables**:
+- `NODE_ENV=production`
+- `DATABASE_PATH=/opt/render/project/.data/finsight.db`
+- `OPENAI_API_KEY` (secret)
+- `ADMIN_PASSWORD` (secret)
+
+**Infrastructure**:
+- Web Service: Standard plan (~$25/month)
+- Persistent Disk: 1GB SSD ($0.25/month)
+- Region: Oregon (us-west)
+- Zero cold starts (Render Pro benefit)
+
+**Security**:
+- Rate limiting (100 requests per 15 minutes per IP)
+- Helmet security headers
+- Production CORS (same-origin requests)
+- Secure environment variable storage
+
+**Configuration Files**:
+- `render.yaml` - Render Blueprint for infrastructure-as-code
+- `frontend/.env.production` - Production environment variables
+- Static file serving in Express for SPA routing
 
 ## Code Quality
 

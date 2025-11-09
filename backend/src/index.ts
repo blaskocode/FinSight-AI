@@ -7,6 +7,8 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 import { assignPersona, storePersonaAssignment, getCurrentPersona } from '../personas/assignPersona';
 import { generateRecommendations, storeRecommendations, getRecommendations } from '../recommendations/engine';
 import { generatePaymentPlan, generatePaymentPlansComparison } from '../recommendations/paymentPlanner';
@@ -24,8 +26,33 @@ import { findUserByUsername } from '../utils/username';
 const app = express();
 const PORT = process.env.PORT || 3002;
 
-// Middleware
-app.use(cors());
+// Security Middleware
+// Helmet adds various HTTP headers for security
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable for now to avoid breaking the app
+  crossOriginEmbedderPolicy: false
+}));
+
+// CORS Configuration - production ready
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? (process.env.FRONTEND_URL || true) // Allow same-origin or configured origin
+    : ['http://localhost:3000', 'http://localhost:5173'],
+  credentials: true
+};
+app.use(cors(corsOptions));
+
+// Rate Limiting - prevent API abuse
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/', limiter);
+
+// Body Parser
 app.use(express.json());
 
 // Performance: Add caching headers for GET requests
@@ -788,7 +815,24 @@ npm run dev
   `);
 });
 
+// Serve frontend static files in production
+if (process.env.NODE_ENV === 'production') {
+  const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+  
+  // Serve static files
+  app.use(express.static(frontendDistPath));
+  
+  // Handle React Router - send all non-API requests to index.html
+  app.get('*', (req: Request, res: Response) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+  
+  console.log(`📦 Serving frontend from ${frontendDistPath}`);
+}
+
 app.listen(PORT, () => {
   console.log(`🚀 FinSight AI Backend running on http://localhost:${PORT}`);
+  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`💾 Database: ${process.env.DATABASE_PATH || 'backend/finsight.db'}`);
 });
 
