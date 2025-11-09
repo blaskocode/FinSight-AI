@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import type { Recommendation } from '../services/api';
-import { BookOpen, Gift, ExternalLink, ChevronDown, ChevronUp, TrendingUp, Clock, Zap } from 'lucide-react';
+import { BookOpen, Gift, ExternalLink, ChevronDown, ChevronUp, TrendingUp, Clock, Zap, GraduationCap, Lightbulb, Info } from 'lucide-react';
 import { PaymentPlanModal } from './PaymentPlanModal';
 import { PartnerOfferCard } from './PartnerOfferCard';
 
@@ -48,59 +48,80 @@ export function RecommendationCard({ recommendation, priority = 'medium', diffic
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+      <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group">
         <div className="flex items-start gap-4">
           <div
-            className={`p-3 rounded-lg flex-shrink-0 ${
-              isEducation ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
+            className={`p-4 rounded-xl flex-shrink-0 shadow-md ${
+              isEducation 
+                ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' 
+                : 'bg-gradient-to-br from-green-500 to-green-600 text-white'
             }`}
             aria-hidden="true"
           >
-            <Icon className="w-6 h-6" aria-hidden="true" />
+            <Icon className="w-7 h-7" aria-hidden="true" />
           </div>
 
           <div className="flex-1 min-w-0">
             {/* Header with badges */}
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
               <span
-                className={`px-2 py-1 text-xs font-semibold rounded ${
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg shadow-sm ${
                   isEducation
-                    ? 'bg-blue-100 text-blue-800'
-                    : 'bg-green-100 text-green-800'
+                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                    : 'bg-green-50 text-green-700 border border-green-200'
                 }`}
               >
-                {isEducation ? 'Education' : 'Partner Offer'}
+                {isEducation ? (
+                  <span className="flex items-center gap-1">
+                    <GraduationCap className="w-3 h-3" />
+                    Learn
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <Gift className="w-3 h-3" />
+                    Opportunity
+                  </span>
+                )}
               </span>
               
-              <span className={`px-2 py-1 text-xs font-semibold rounded border ${priorityColors[priority]}`}>
+              <span className={`px-3 py-1.5 text-xs font-bold rounded-lg border shadow-sm ${priorityColors[priority]}`}>
                 {priority.charAt(0).toUpperCase() + priority.slice(1)} Priority
               </span>
               
-              <span className={`px-2 py-1 text-xs font-semibold rounded flex items-center gap-1 ${difficultyInfo.color}`}>
+              <span className={`px-3 py-1.5 text-xs font-bold rounded-lg flex items-center gap-1 shadow-sm ${difficultyInfo.color}`}>
                 <DifficultyIcon className="w-3 h-3" />
                 {difficultyInfo.label}
               </span>
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-900 mb-2" id={`rec-title-${recommendation.id}`}>
+            <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors" id={`rec-title-${recommendation.id}`}>
               {recommendation.title}
             </h3>
 
-            <p className="text-gray-600 mb-4 line-clamp-2">{recommendation.description}</p>
+            <p className="text-gray-700 mb-4 leading-relaxed">{recommendation.description}</p>
 
             {/* Impact Estimate */}
             {recommendation.impact_estimate && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-                <p className="text-sm font-semibold text-green-900 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
-                  Impact: {recommendation.impact_estimate}
-                </p>
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-lg p-4 mb-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <TrendingUp className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-green-800 uppercase tracking-wide mb-1">Potential Impact</p>
+                    <p className="text-sm font-bold text-green-900">{recommendation.impact_estimate}</p>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Rationale */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-              <p className="text-sm text-gray-700 italic">"{recommendation.rationale}"</p>
+            {/* Rationale - Educational Focus */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg p-4 mb-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <Lightbulb className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-blue-800 uppercase tracking-wide mb-2">Why This Matters</p>
+                  <p className="text-sm text-gray-800 leading-relaxed">"{recommendation.rationale}"</p>
+                </div>
+              </div>
             </div>
 
             {/* Actions */}
@@ -120,7 +141,7 @@ export function RecommendationCard({ recommendation, priority = 'medium', diffic
               ) : (
                 <a
                   href="#"
-                  className="px-4 py-3 min-h-[44px] bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors text-sm font-semibold flex items-center gap-2 touch-manipulation"
+                  className="px-6 py-3 min-h-[44px] bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 active:from-blue-800 active:to-blue-900 transition-all text-sm font-bold flex items-center gap-2 touch-manipulation shadow-md hover:shadow-lg"
                   onClick={(e) => {
                     e.preventDefault();
                     // In a real app, this would navigate to the article
@@ -128,6 +149,7 @@ export function RecommendationCard({ recommendation, priority = 'medium', diffic
                   }}
                   aria-label={`Learn more about ${recommendation.title}`}
                 >
+                  <GraduationCap className="w-4 h-4" aria-hidden="true" />
                   Learn More
                   <ExternalLink className="w-4 h-4" aria-hidden="true" />
                 </a>
@@ -135,20 +157,21 @@ export function RecommendationCard({ recommendation, priority = 'medium', diffic
               
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="px-4 py-3 min-h-[44px] bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 active:bg-gray-300 transition-colors text-sm font-semibold flex items-center gap-2 touch-manipulation"
+                className="px-4 py-3 min-h-[44px] bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors text-sm font-medium flex items-center gap-2 touch-manipulation border border-gray-200"
                 aria-expanded={isExpanded}
                 aria-controls={`rec-details-${recommendation.id}`}
                 aria-label={isExpanded ? 'Hide recommendation details' : 'Show recommendation details'}
               >
+                <Info className="w-4 h-4" aria-hidden="true" />
                 {isExpanded ? (
                   <>
                     <ChevronUp className="w-4 h-4" aria-hidden="true" />
-                    Show Less
+                    Less Info
                   </>
                 ) : (
                   <>
                     <ChevronDown className="w-4 h-4" aria-hidden="true" />
-                    Show Details
+                    More Info
                   </>
                 )}
               </button>

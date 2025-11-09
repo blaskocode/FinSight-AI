@@ -1,7 +1,7 @@
 // PersonaTimeline Component
 // Horizontal timeline showing persona evolution over time
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { fetchPersonaHistory } from '../services/api';
 import type { PersonaTimelineEntry, PersonaHistoryEntry } from '../services/api';
 import { getPersonaConfig } from '../utils/personaConfig';
@@ -54,6 +54,99 @@ function generateNarrative(timeline: PersonaTimelineEntry[], currentPersona: str
   }
 
   return `Your financial persona has evolved from ${config.displayName} to ${lastConfig.displayName} over the past ${timeline.length} months.`;
+}
+
+/**
+ * Badge component with tooltip that escapes container boundaries
+ */
+function BadgeWithTooltip({ 
+  config, 
+  entry, 
+  Icon, 
+  isFirst, 
+  isLastItem 
+}: { 
+  config: ReturnType<typeof getPersonaConfig>; 
+  entry: PersonaTimelineEntry; 
+  Icon: any; 
+  isFirst: boolean; 
+  isLastItem: boolean;
+}) {
+  const badgeRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const updateTooltipPosition = useCallback(() => {
+    if (!badgeRef.current || !tooltipRef.current) return;
+    
+    const badgeRect = badgeRef.current.getBoundingClientRect();
+    const tooltip = tooltipRef.current;
+    
+    if (isFirst) {
+      tooltip.style.left = `${badgeRect.left}px`;
+      tooltip.style.top = `${badgeRect.bottom + 8}px`;
+      tooltip.style.transform = 'none';
+    } else if (isLastItem) {
+      tooltip.style.left = 'auto';
+      tooltip.style.right = `${window.innerWidth - badgeRect.right}px`;
+      tooltip.style.top = `${badgeRect.bottom + 8}px`;
+      tooltip.style.transform = 'none';
+    } else {
+      tooltip.style.left = `${badgeRect.left + badgeRect.width / 2}px`;
+      tooltip.style.top = `${badgeRect.bottom + 8}px`;
+      tooltip.style.transform = 'translateX(-50%)';
+    }
+  }, [isFirst, isLastItem]);
+
+  useEffect(() => {
+    if (isHovered) {
+      updateTooltipPosition();
+      // Update on scroll/resize
+      window.addEventListener('scroll', updateTooltipPosition, true);
+      window.addEventListener('resize', updateTooltipPosition);
+    }
+    
+    return () => {
+      window.removeEventListener('scroll', updateTooltipPosition, true);
+      window.removeEventListener('resize', updateTooltipPosition);
+    };
+  }, [isHovered, updateTooltipPosition]);
+
+  return (
+    <>
+      <div
+        ref={badgeRef}
+        className={`relative ${config.color.bg} ${config.color.border} rounded-full p-3 border-2 shadow-lg transition-all duration-200 hover:scale-110 hover:shadow-2xl cursor-pointer`}
+        title={`${config.displayName} - ${entry.month} ${entry.year}`}
+        style={{ zIndex: 20, overflow: 'visible' }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <Icon className={`w-6 h-6 ${config.color.text}`} />
+      </div>
+      
+      {/* Tooltip - Fixed positioning to escape all containers */}
+      <div 
+        ref={tooltipRef}
+        className="fixed px-3 py-2 bg-gray-900 text-white text-xs rounded-lg transition-opacity pointer-events-none whitespace-nowrap shadow-2xl min-w-max"
+        style={{ 
+          zIndex: 99999,
+          opacity: isHovered ? 1 : 0
+        }}
+      >
+        <div className="font-semibold">{config.displayName}</div>
+        <div className="text-gray-300">{entry.month} {entry.year}</div>
+        {/* Arrow pointing up */}
+        <div 
+          className="absolute bottom-full -mb-1 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-transparent border-b-gray-900"
+          style={{
+            left: isFirst ? '16px' : isLastItem ? 'calc(100% - 16px)' : '50%',
+            transform: isFirst ? 'none' : isLastItem ? 'none' : 'translateX(-50%)'
+          }}
+        />
+      </div>
+    </>
+  );
 }
 
 export function PersonaTimeline({ userId }: PersonaTimelineProps) {
@@ -152,7 +245,7 @@ export function PersonaTimeline({ userId }: PersonaTimelineProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-8 overflow-visible relative z-0">
+    <div className="bg-white rounded-lg shadow-md p-6 mb-8 relative" style={{ overflow: 'visible' }}>
       <h2 className="text-xl font-semibold text-gray-900 mb-4">Persona Evolution</h2>
       
       {/* Narrative */}
@@ -163,39 +256,35 @@ export function PersonaTimeline({ userId }: PersonaTimelineProps) {
       )}
 
       {/* Timeline */}
-      <div className="overflow-x-auto overflow-y-visible pb-4 pt-4 relative z-10">
-        <div className="relative min-w-full z-10" style={{ minWidth: `${Math.max(timeline.length * 120, 600)}px` }}>
+      <div className="overflow-x-auto pb-4 pt-2 relative" style={{ overflowY: 'visible' }}>
+        <div className="relative min-w-full" style={{ minWidth: `${Math.max(timeline.length * 120, 600)}px` }}>
           {/* Timeline Line */}
           <div className="absolute top-12 left-0 right-0 h-1 bg-gray-200 z-0" />
           
           {/* Timeline Entries */}
-          <div className="relative flex gap-4 overflow-visible z-10">
+          <div className="relative flex gap-4" style={{ overflow: 'visible' }}>
             {timeline.map((entry, index) => {
               const config = getPersonaConfig(entry.persona_type);
               const Icon = config.icon;
               const isLast = index === timeline.length - 1;
               const isTransition = index > 0 && entry.persona_type !== timeline[index - 1].persona_type;
+              const isFirst = index === 0;
+              const isLastItem = index === timeline.length - 1;
 
               return (
                 <div
                   key={`${entry.year}-${entry.monthIndex}-${entry.persona_type}-${entry.startDate}`}
-                  className="flex flex-col items-center relative z-10"
-                  style={{ minWidth: '100px' }}
+                  className="flex flex-col items-center relative"
+                  style={{ minWidth: '100px', overflow: 'visible' }}
                 >
                   {/* Persona Badge */}
-                  <div
-                    className={`relative z-20 ${config.color.bg} ${config.color.border} rounded-full p-3 border-2 shadow-lg transition-all duration-200 hover:scale-110 hover:shadow-2xl cursor-pointer group`}
-                    title={`${config.displayName} - ${entry.month} ${entry.year}`}
-                  >
-                    <Icon className={`w-6 h-6 ${config.color.text}`} />
-                    
-                    {/* Tooltip */}
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
-                      <div className="font-semibold">{config.displayName}</div>
-                      <div className="text-gray-300">{entry.month} {entry.year}</div>
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900" />
-                    </div>
-                  </div>
+                  <BadgeWithTooltip
+                    config={config}
+                    entry={entry}
+                    Icon={Icon}
+                    isFirst={isFirst}
+                    isLastItem={isLastItem}
+                  />
 
                   {/* Month Label */}
                   <div className="mt-2 text-center">

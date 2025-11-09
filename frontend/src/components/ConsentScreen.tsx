@@ -4,12 +4,15 @@
 import { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { ErrorMessage } from './ErrorMessage';
+import { ConfirmDialog } from './ConfirmDialog';
 import { getErrorMessage } from '../services/api';
 
 export function ConsentScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { userId, submitConsent } = useStore();
+  const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
+  const [isRevoking, setIsRevoking] = useState(false);
+  const { userId, submitConsent, reset } = useStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +32,43 @@ export function ConsentScreen() {
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRevokeAccess = async () => {
+    if (!userId) return;
+    
+    setIsRevoking(true);
+    try {
+      // Revoke consent (or confirm it's already revoked)
+      await submitConsent(userId, false);
+      
+      // Clear onboarding completion flag so user goes through onboarding again
+      localStorage.removeItem(`onboarding_complete_${userId}`);
+      
+      // Sign out
+      reset();
+    } catch (error: any) {
+      // Check if error is because consent is already revoked
+      const errorMessage = error?.response?.data?.message || error?.message || '';
+      const isAlreadyRevoked = error?.response?.status === 404 && 
+        (errorMessage.toLowerCase().includes('no active consent') || 
+         errorMessage.toLowerCase().includes('already revoked'));
+      
+      if (isAlreadyRevoked) {
+        // Consent is already revoked - that's fine, proceed with sign out
+        console.log('Consent already revoked, proceeding with sign out');
+        localStorage.removeItem(`onboarding_complete_${userId}`);
+        setShowRevokeConfirm(false);
+        reset();
+      } else {
+        // Other error - show message but still sign out
+        console.error('Error revoking access:', error);
+        setIsRevoking(false);
+        setShowRevokeConfirm(false);
+        alert('Failed to revoke access, but you have been signed out. Please contact support if this persists.');
+        reset();
+      }
     }
   };
 
@@ -83,19 +123,44 @@ export function ConsentScreen() {
             />
           )}
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isSubmitting ? 'Processing...' : 'I Consent - Continue to Dashboard'}
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              type="submit"
+              disabled={isSubmitting || isRevoking}
+              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isSubmitting ? 'Processing...' : 'I Consent - Continue to Dashboard'}
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setShowRevokeConfirm(true)}
+              disabled={isSubmitting || isRevoking}
+              className="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Revoke Access & Sign Out
+            </button>
+          </div>
         </form>
 
         <p className="text-xs text-gray-500 text-center mt-4">
           By clicking above, you agree to allow FinSight AI to analyze your financial data for personalized insights.
         </p>
       </div>
+      
+      {/* Revoke Access Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showRevokeConfirm}
+        title="Revoke Access"
+        message="Are you sure you want to revoke access? This will sign you out and you'll need to go through onboarding again the next time you sign in."
+        confirmText="Revoke Access"
+        cancelText="Cancel"
+        onConfirm={handleRevokeAccess}
+        onCancel={() => {
+          setShowRevokeConfirm(false);
+        }}
+        isLoading={isRevoking}
+      />
     </div>
   );
 }

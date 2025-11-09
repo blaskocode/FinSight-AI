@@ -102,6 +102,8 @@ Display secondary personas as tags.
 - Every recommendation includes "because" rationale
 - Clear explanation of persona assignment
 - Visible consent status and controls
+- Users can revoke access at any time from multiple locations (Dashboard, ConsentScreen, Sign Out dialog)
+- Sign out dialog clearly explains data retention unless access is revoked
 
 ## Guardrails & Compliance
 

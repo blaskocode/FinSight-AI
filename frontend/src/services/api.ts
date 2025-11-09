@@ -347,6 +347,23 @@ export async function fetchAdminUsers(
   return response.data;
 }
 
+// Sample Users for Login Screen
+export interface SampleUser {
+  username: string;
+  name: string;
+  persona: string;
+  description: string;
+}
+
+export interface SampleUsersResponse {
+  users: SampleUser[];
+}
+
+export async function fetchSampleUsers(): Promise<SampleUsersResponse> {
+  const response = await api.get<SampleUsersResponse>('/sample-users');
+  return response.data;
+}
+
 export interface UserDetail {
   user_id: string;
   name: string;
@@ -580,7 +597,15 @@ export interface ActionableItem {
  */
 export async function fetchOverarchingMessage(userId: string): Promise<OverarchingMessageResponse> {
   return retryApiCall(async () => {
-    const response = await api.get<OverarchingMessageResponse>(`/overarching-message/${userId}`);
+    // Add cache-busting parameter to prevent browser caching
+    const cacheBuster = `_t=${Date.now()}`;
+    const response = await api.get<OverarchingMessageResponse>(`/overarching-message/${userId}?${cacheBuster}`, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
     return response.data;
   });
 }

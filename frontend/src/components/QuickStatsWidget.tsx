@@ -298,7 +298,17 @@ export function QuickStatsWidget({ persona, signals }: QuickStatsWidgetProps) {
 
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Stats</h2>
+      <div className="flex items-center gap-3 mb-5">
+        <div className="p-2 bg-purple-100 rounded-lg">
+          <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Quick Stats</h2>
+          <p className="text-sm text-gray-600 mt-1">Key metrics at a glance</p>
+        </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {stats.map((stat, index) => {
           const colors = getColorClasses(stat.color);
@@ -311,37 +321,40 @@ export function QuickStatsWidget({ persona, signals }: QuickStatsWidgetProps) {
           return (
             <div
               key={index}
-              className={`${colors.bg} ${colors.border} rounded-lg p-4 border-2 hover:shadow-md transition-shadow group relative`}
+              className={`${colors.bg} ${colors.border} rounded-xl p-5 border-2 hover:shadow-lg hover:-translate-y-0.5 transition-all group relative`}
               role="region"
               aria-label={`${stat.label}: ${stat.value}`}
             >
-              <div className="flex items-start justify-between mb-2">
-                <div className={`p-2 rounded-lg ${colors.icon} bg-white/50`} aria-hidden="true">
-                  <Icon className="w-5 h-5" aria-hidden="true" />
+              <div className="flex items-start justify-between mb-3">
+                <div className={`p-3 rounded-xl ${colors.icon} bg-white shadow-sm`} aria-hidden="true">
+                  <Icon className="w-6 h-6" aria-hidden="true" />
                 </div>
                 {stat.trend && (
-                  <TrendIcon className={`w-4 h-4 ${trendColor}`} aria-hidden="true" />
+                  <div className={`p-2 rounded-lg bg-white/70 ${trendColor}`} aria-hidden="true">
+                    <TrendIcon className="w-4 h-4" aria-hidden="true" />
+                  </div>
                 )}
               </div>
               
               <div className="mt-2">
-                <div className={`text-2xl font-bold ${colors.text} mb-1`}>
+                <div className={`text-3xl font-bold ${colors.text} mb-1`}>
                   {stat.value}
                 </div>
-                <div className="text-sm font-medium text-gray-700">
+                <div className="text-sm font-semibold text-gray-800">
                   {stat.label}
                 </div>
               </div>
 
-              {/* Tooltip */}
+              {/* Enhanced Tooltip */}
               {stat.tooltip && (
                 <div 
-                  className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-xl max-w-xs"
+                  className="absolute bottom-full left-0 mb-2 px-4 py-3 bg-gradient-to-br from-gray-900 to-gray-800 text-white text-sm rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-normal z-10 shadow-2xl max-w-xs border border-gray-700"
                   role="tooltip"
                   aria-hidden="true"
                 >
-                  {stat.tooltip}
-                  <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900" />
+                  <div className="font-semibold mb-1 text-blue-300">💡 Educational Tip</div>
+                  <div className="text-gray-100 leading-relaxed">{stat.tooltip}</div>
+                  <div className="absolute top-full left-6 -mt-1 border-4 border-transparent border-t-gray-900" />
                 </div>
               )}
             </div>

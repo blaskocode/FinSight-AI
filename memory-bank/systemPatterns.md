@@ -64,6 +64,8 @@ User Interface (React)
 - `consent.js` - Consent management and enforcement
 - Middleware: `requireConsent.js` - Protects routes requiring consent
 - Audit logging for admin access
+- Revoke access functionality: Users can revoke consent from Dashboard, ConsentScreen, or Sign Out dialog
+- Already-revoked consent handling: Backend returns success (200) if consent already revoked, frontend proceeds gracefully
 
 #### Data Storage
 

@@ -75,8 +75,18 @@ export const SpendingBreakdown = memo(function SpendingBreakdown({ userId }: Spe
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Spending Insights</h2>
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-teal-100 rounded-lg">
+            <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Spending Insights</h2>
+            <p className="text-sm text-gray-600 mt-1">Understand where your money goes</p>
+          </div>
+        </div>
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
           <span className="ml-3 text-gray-600">Loading spending analysis...</span>
@@ -87,8 +97,18 @@ export const SpendingBreakdown = memo(function SpendingBreakdown({ userId }: Spe
 
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Spending Insights</h2>
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-teal-100 rounded-lg">
+            <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Spending Insights</h2>
+            <p className="text-sm text-gray-600 mt-1">Understand where your money goes</p>
+          </div>
+        </div>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <div>
@@ -102,8 +122,18 @@ export const SpendingBreakdown = memo(function SpendingBreakdown({ userId }: Spe
 
   if (!analysis || analysis.categoryBreakdown.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Spending Insights</h2>
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-teal-100 rounded-lg">
+            <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Spending Insights</h2>
+            <p className="text-sm text-gray-600 mt-1">Understand where your money goes</p>
+          </div>
+        </div>
         <div className="bg-gray-50 rounded-lg p-8 text-center">
           <p className="text-gray-600">No spending data available yet.</p>
         </div>
@@ -154,8 +184,18 @@ export const SpendingBreakdown = memo(function SpendingBreakdown({ userId }: Spe
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Spending Insights</h2>
+    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 bg-teal-100 rounded-lg">
+          <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Spending Insights</h2>
+          <p className="text-sm text-gray-600 mt-1">Understand where your money goes</p>
+        </div>
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

@@ -256,8 +256,11 @@ export const useStore = create<UserState & UserActions>((set) => ({
 
   reset: () => {
     // Clear localStorage on logout
+    // NOTE: We do NOT clear onboarding_complete flag here - that should only be cleared when revoking access
+    // This allows users to sign out and sign back in without going through onboarding again
     localStorage.removeItem('userId');
     localStorage.removeItem('userName');
+    
     // Reset all state - user will see login screen
     set({
       ...initialState,

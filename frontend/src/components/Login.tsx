@@ -1,15 +1,89 @@
 // Login Component
 // Username/password login screen
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { Loader2, LogIn } from 'lucide-react';
+import { getPersonaConfig } from '../utils/personaConfig';
+import { fetchSampleUsers, type SampleUser } from '../services/api';
+
+// Helper to get hover border class for persona (ensures Tailwind detects it)
+function getHoverBorderClass(personaType: string): string {
+  const hoverClasses: Record<string, string> = {
+    'high_utilization': 'hover:border-red-500',
+    'variable_income': 'hover:border-orange-500',
+    'subscription_heavy': 'hover:border-purple-500',
+    'savings_builder': 'hover:border-green-500',
+    'lifestyle_creep': 'hover:border-blue-500',
+  };
+  return hoverClasses[personaType] || 'hover:border-gray-400';
+}
+
+// Fallback sample users if API fails
+const FALLBACK_SAMPLE_USERS: SampleUser[] = [
+  {
+    username: 'diana.huang',
+    name: 'Diana Huang',
+    persona: 'savings_builder',
+    description: 'Building healthy savings habits'
+  },
+  {
+    username: 'marcus.chen',
+    name: 'Marcus Chen',
+    persona: 'high_utilization',
+    description: 'High credit utilization focus'
+  },
+  {
+    username: 'jordan.kim',
+    name: 'Jordan Kim',
+    persona: 'variable_income',
+    description: 'Variable income budgeting'
+  },
+  {
+    username: 'taylor.park',
+    name: 'Taylor Park',
+    persona: 'subscription_heavy',
+    description: 'Multiple subscriptions'
+  },
+  {
+    username: 'sophia.anderson',
+    name: 'Sophia Anderson',
+    persona: 'lifestyle_creep',
+    description: 'High income, low savings rate'
+  },
+];
 
 export function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [sampleUsers, setSampleUsers] = useState<SampleUser[]>(FALLBACK_SAMPLE_USERS);
+  const [loadingUsers, setLoadingUsers] = useState(true);
   const { login, loading } = useStore();
+
+  // Fetch real sample users from database
+  useEffect(() => {
+    const loadSampleUsers = async () => {
+      try {
+        const response = await fetchSampleUsers();
+        if (response.users && response.users.length > 0) {
+          setSampleUsers(response.users);
+        }
+      } catch (err) {
+        console.warn('Failed to load sample users, using fallback:', err);
+        // Keep fallback users
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+    loadSampleUsers();
+  }, []);
+
+  const handleSampleUserClick = (sampleUsername: string) => {
+    setUsername(sampleUsername);
+    setPassword('test'); // Auto-fill password
+    setError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +111,50 @@ export function Login() {
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">FinSight AI</h1>
           <p className="text-gray-600">Sign in to access your financial dashboard</p>
+        </div>
+
+        {/* Sample Users */}
+        <div className="mb-6 p-4 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border border-gray-200">
+          <div className="flex items-center gap-2 mb-3">
+            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <p className="text-sm font-semibold text-gray-900">Try a sample user:</p>
+            {loadingUsers && (
+              <Loader2 className="w-3 h-3 text-gray-400 animate-spin ml-2" />
+            )}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {sampleUsers.slice(0, 5).map((sampleUser, index) => {
+              const personaConfig = getPersonaConfig(sampleUser.persona);
+              // Get persona colors - these are Tailwind classes from the config
+              const bgClass = personaConfig.color.bg;
+              const borderClass = personaConfig.color.border;
+              const textClass = personaConfig.color.text;
+              const hoverBorderClass = getHoverBorderClass(sampleUser.persona);
+              const isFifthItem = index === 4;
+              
+              return (
+                <button
+                  key={sampleUser.username}
+                  type="button"
+                  onClick={() => handleSampleUserClick(sampleUser.username)}
+                  disabled={loading}
+                  className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all text-center group disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md h-[85px] w-full ${bgClass} ${borderClass} ${hoverBorderClass} ${isFifthItem ? 'sm:col-span-2 sm:mx-auto sm:w-[calc(50%-0.25rem)]' : ''}`}
+                >
+                  <div className={`font-semibold text-sm ${textClass} transition-colors leading-tight`}>
+                    {sampleUser.name}
+                  </div>
+                  <div className={`text-xs ${textClass} opacity-80 mt-0.5 leading-tight`}>
+                    {personaConfig.displayName}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-gray-500 mt-3 text-center">
+            Click any user above to auto-fill credentials
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

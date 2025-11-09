@@ -20,8 +20,8 @@
 ### ✅ Phase 5 - COMPLETE (PR-34 through PR-43)
 **Status**: All Phase 5 PRs complete! PR-34, PR-35, PR-36, PR-37, PR-38, PR-39, PR-40, PR-41, PR-42, and PR-43 all finished. All feature detection tests (53), business logic tests (34), and integration tests (55) passing. Total: 142 tests (138 passing). Performance optimizations, comprehensive error handling, complete documentation, API documentation, decision log/limitations documentation, demo materials, and final polish all complete. All audits passed: Security ✅, Accessibility ✅ (WCAG 2.1 AA), Performance ✅, UI/UX ✅. Application is production-ready! 🚀
 
-### ✅ Post-Launch Features (PR-44 through PR-51) - COMPLETE
-**Status**: All eight PRs complete!
+### ✅ Post-Launch Features (PR-44 through PR-59) - COMPLETE
+**Status**: All post-launch PRs complete! Additional user experience improvements implemented.
 - **PR-46**: Username/Password Authentication ✅ - Login screen with username/password, backend login endpoint, username utility
 - **PR-44**: User Name Display & Sign Out ✅ - Dashboard header shows name, sign out button (user switching removed in PR-48)
 - **PR-45**: Per-User Onboarding Flow ✅ - Onboarding per-user (localStorage key with userId)
@@ -38,6 +38,27 @@
 - **PR-57**: Hide Secondary Persona Box When No Secondary Personas ✅ - Hide secondary persona section entirely when user has no secondary personas.
 - **PR-58**: Calculate Historical Persona Evaluations for Past Months ✅ - One-time operation to backfill historical persona assignments for past months (up to 12 months).
 - **PR-59**: Show Persona Evolution History in Timeline ✅ - PersonaTimeline component displays full history of persona evolution (ready once PR-58 backfill is run).
+
+### ✅ Recent User Experience Improvements (Nov 9, 2024)
+**Status**: Revoke access feature, login screen improvements, and edge case handling implemented.
+
+**Revoke Access Feature:**
+- Added "Revoke Access" button to Dashboard header (red styling, next to Sign Out)
+- Added "Revoke Access & Sign Out" button to ConsentScreen as second option
+- Added "Revoke Access" as third option in Sign Out confirmation dialog
+- Backend returns success (200) when consent is already revoked (treats as acceptable state)
+- Frontend gracefully handles already-revoked consent - proceeds with sign out if goal already achieved
+- Revoking access clears onboarding completion flag, ensuring users go through onboarding again
+- Regular sign out does NOT revoke access or clear onboarding flag (preserves user state)
+- Files: `backend/src/index.ts`, `frontend/src/components/Dashboard.tsx`, `frontend/src/components/ConsentScreen.tsx`, `frontend/src/components/ConfirmDialog.tsx`, `frontend/src/store/useStore.ts`
+
+**Login Screen Improvements:**
+- Sample user cards now use persona-specific colors (background, border, text, hover effects)
+- All cards have uniform size (fixed height `h-[85px]`, full width `w-full`)
+- 5th card (lifestyle creep) is centered on its row
+- Created Samantha Carson (`samantha.carson`) as lifestyle_creep sample user
+- Sample users endpoint verifies fallback users exist before using them
+- Files: `frontend/src/components/Login.tsx`, `backend/src/index.ts`, `scripts/assign-lifestyle-creep-persona.js`, `scripts/fix-lifestyle-creep-persona.js`
 
 ### ✅ Recent Bug Fixes & Improvements (Nov 7, 2024)
 **Status**: Fixed multiple issues with overarching AI message and persona history display.

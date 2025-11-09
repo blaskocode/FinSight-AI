@@ -92,9 +92,11 @@ app.post('/api/consent', async (req: Request, res: Response) => {
           message: 'Consent revoked successfully'
         });
       } else {
-        res.status(404).json({
-          error: 'No active consent found',
-          message: 'User does not have an active consent to revoke'
+        // Consent is already revoked (or never existed) - this is fine, treat as success
+        // The goal is to ensure consent is revoked, which is already the case
+        res.json({
+          success: true,
+          message: 'Consent is already revoked'
         });
       }
     }
@@ -421,10 +423,49 @@ app.get('/api/overarching-message/:user_id', requireConsent, async (req: Request
     const userId = req.params.user_id;
     const { generateOverarchingMessage } = await import('../services/overarchingMessageService');
     const message = await generateOverarchingMessage(userId);
+    
+    // CRITICAL: ALWAYS ensure at least one actionable item is returned
+    // This is NON-NEGOTIABLE - every user must have at least one recommended action
+    if (!message.actionableItems || message.actionableItems.length === 0) {
+      console.error('OverarchingMessage API: CRITICAL - Service returned empty actionableItems!', {
+        userId,
+        hasMessage: !!message.message,
+        messageLength: message.message?.length
+      });
+      
+      // Force add a fallback actionable item
+      message.actionableItems = [{
+        title: 'Explore Your Financial Dashboard',
+        description: 'Review your financial profile, recommendations, and insights to understand your financial health better.',
+        priority: 'medium'
+      }];
+    }
+    
+    // Ensure message exists
+    if (!message.message || message.message.trim() === '') {
+      console.error('OverarchingMessage API: CRITICAL - Service returned empty message!', { userId });
+      message.message = 'Welcome to FinSight AI! We\'re analyzing your financial data to provide personalized recommendations.';
+    }
+    
+    console.log('OverarchingMessage API: Returning response', {
+      userId,
+      messageLength: message.message.length,
+      actionableItemsCount: message.actionableItems.length,
+      actionableItemsTitles: message.actionableItems.map(item => item.title)
+    });
+    
     res.json(message);
   } catch (error: any) {
     console.error('Error generating overarching message:', error);
-    res.status(500).json({ error: 'Internal server error', message: error.message });
+    // CRITICAL: Even on error, return a valid response with at least one actionable item
+    res.status(500).json({
+      message: 'Welcome to FinSight AI! We\'re analyzing your financial data to provide personalized recommendations.',
+      actionableItems: [{
+        title: 'Explore Your Financial Dashboard',
+        description: 'Review your financial profile, recommendations, and insights to understand your financial health better.',
+        priority: 'medium'
+      }]
+    });
   }
 });
 
@@ -482,6 +523,140 @@ app.post('/api/admin/backfill-historical-personas', async (req: Request, res: Re
     res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 });
+
+// Sample Users Endpoint - Get one user per persona for login screen
+app.get('/api/sample-users', async (req: Request, res: Response) => {
+  try {
+    const { all } = await import('../db/db');
+    
+    // Get one user per persona type
+    // For each persona, get the first user (alphabetically by name) with that persona
+    const allUsers = await all<{
+      user_id: string;
+      name: string;
+      email: string;
+      persona_type: string;
+    }>(`
+      SELECT 
+        u.user_id,
+        u.name,
+        u.email,
+        p.persona_type
+      FROM users u
+      INNER JOIN personas p ON u.user_id = p.user_id
+      WHERE p.assigned_at = (
+        SELECT MAX(assigned_at) 
+        FROM personas 
+        WHERE user_id = u.user_id
+      )
+      ORDER BY p.persona_type, u.name
+    `);
+
+    // Group by persona and take first user for each
+    // CRITICAL: Prioritize Diana Huang for savings_builder persona if she exists
+    // CRITICAL: Must return exactly 5 users, one for each persona type
+    const personaMap = new Map<string, typeof allUsers[0]>();
+    
+    // First pass: Find Diana Huang and prioritize her for her persona
+    let dianaHuang: typeof allUsers[0] | null = null;
+    for (const user of allUsers) {
+      if (user.name.toLowerCase() === 'diana huang') {
+        dianaHuang = user;
+        break;
+      }
+    }
+    
+    // If Diana Huang exists, add her first for her persona
+    if (dianaHuang) {
+      personaMap.set(dianaHuang.persona_type, dianaHuang);
+    }
+    
+    // Then add other users for personas that don't have a user yet
+    for (const user of allUsers) {
+      if (!personaMap.has(user.persona_type)) {
+        personaMap.set(user.persona_type, user);
+      }
+    }
+    
+    // CRITICAL: Only return users that actually exist in the database
+    // Define all 5 persona types in order
+    const allPersonaTypes: Array<'high_utilization' | 'variable_income' | 'subscription_heavy' | 'savings_builder' | 'lifestyle_creep'> = [
+      'high_utilization',
+      'variable_income',
+      'subscription_heavy',
+      'savings_builder',
+      'lifestyle_creep'
+    ];
+    
+    // Build final array - only include users that exist in the database
+    const finalUsers: Array<{
+      username: string;
+      name: string;
+      persona: string;
+      description: string;
+    }> = [];
+    
+    // Import username utility to check if fallback users exist
+    const { findUserByUsername } = await import('../utils/username');
+    
+    for (const personaType of allPersonaTypes) {
+      const user = personaMap.get(personaType);
+      if (user) {
+        // Use real user from database
+        const username = user.name.toLowerCase().replace(/\s+/g, '.');
+        finalUsers.push({
+          username,
+          name: user.name,
+          persona: user.persona_type,
+          description: getPersonaDescription(user.persona_type)
+        });
+      } else {
+        // Fallback: Try to use a default user for this persona type
+        // BUT only if that user actually exists in the database
+        const fallbackUsers: Record<string, { name: string; username: string }> = {
+          'high_utilization': { name: 'Marcus Chen', username: 'marcus.chen' },
+          'variable_income': { name: 'Jordan Kim', username: 'jordan.kim' },
+          'subscription_heavy': { name: 'Taylor Park', username: 'taylor.park' },
+          'savings_builder': { name: 'Diana Huang', username: 'diana.huang' },
+          'lifestyle_creep': { name: 'Samantha Carson', username: 'samantha.carson' }
+        };
+        
+        const fallback = fallbackUsers[personaType];
+        // Verify the fallback user exists before adding them
+        const fallbackUserExists = await findUserByUsername(fallback.username);
+        if (fallbackUserExists) {
+          finalUsers.push({
+            username: fallback.username,
+            name: fallback.name,
+            persona: personaType,
+            description: getPersonaDescription(personaType)
+          });
+        }
+        // If fallback user doesn't exist, skip this persona (don't add to finalUsers)
+        // This prevents showing users that can't log in
+      }
+    }
+
+    res.json({ users: finalUsers });
+  } catch (error: any) {
+    console.error('Error fetching sample users:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+function getPersonaDescription(personaType: string): string {
+  const descriptions: Record<string, string> = {
+    'high_utilization': 'High credit utilization focus',
+    'variable_income': 'Variable income budgeting',
+    'subscription_heavy': 'Multiple subscriptions',
+    'savings_builder': 'Building healthy savings habits',
+    'lifestyle_creep': 'High income, low savings rate'
+  };
+  return descriptions[personaType] || 'Financial insights';
+}
 
 // Admin Login Endpoint
 app.post('/api/admin/login', async (req: Request, res: Response) => {

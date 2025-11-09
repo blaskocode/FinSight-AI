@@ -66,10 +66,15 @@ export function ChatWindow({ userId, onClose }: ChatWindowProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-blue-600 text-white sm:rounded-t-lg">
-        <div className="flex items-center gap-2">
-          <Bot className="w-5 h-5" />
-          <h3 className="font-semibold text-base sm:text-lg">FinSight AI Assistant</h3>
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600 text-white sm:rounded-t-lg shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+            <Bot className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-base sm:text-lg">FinSight AI Assistant</h3>
+            <p className="text-xs text-blue-100">Your financial education companion</p>
+          </div>
         </div>
         <button
           onClick={onClose}
@@ -84,17 +89,30 @@ export function ChatWindow({ userId, onClose }: ChatWindowProps) {
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
         {messages.length === 0 && (
           <div className="text-center py-8">
-            <Bot className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-4">Ask me anything about your finances!</p>
-            <div className="space-y-2">
-              <p className="text-sm font-semibold text-gray-700 mb-2">Suggested questions:</p>
+            <div className="p-4 bg-blue-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <Bot className="w-8 h-8 text-blue-600" />
+            </div>
+            <h4 className="text-lg font-bold text-gray-900 mb-2">Welcome to FinSight AI</h4>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">Ask me anything about your finances! I'm here to help you understand your financial health and learn about money management.</p>
+            <div className="space-y-2 max-w-lg mx-auto">
+              <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center justify-center gap-2">
+                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Try asking:
+              </p>
               {SUGGESTED_QUESTIONS.map((question, index) => (
                 <button
                   key={index}
                   onClick={() => handleSuggestedQuestion(question)}
-                  className="block w-full text-left px-4 py-3 min-h-[44px] text-sm text-blue-600 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-colors border border-blue-200 touch-manipulation"
+                  className="block w-full text-left px-4 py-3 min-h-[44px] text-sm text-blue-700 hover:bg-blue-50 active:bg-blue-100 rounded-lg transition-all border border-blue-200 touch-manipulation hover:shadow-md hover:border-blue-300 font-medium"
                 >
-                  {question}
+                  <span className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {question}
+                  </span>
                 </button>
               ))}
             </div>

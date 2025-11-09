@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    @apply antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
 @layer utilities {
   @keyframes fade-in {
     from {
@@ -21,5 +28,29 @@
   /* Touch optimization for mobile */
   .touch-manipulation {
     touch-action: manipulation;
+  }
+
+  /* Professional financial app styling */
+  .financial-card {
+    @apply bg-white rounded-xl shadow-lg border border-gray-100;
+  }
+
+  .financial-card-hover {
+    @apply hover:shadow-2xl hover:-translate-y-1 transition-all duration-300;
+  }
+
+  /* Educational badge styling */
+  .education-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg shadow-sm border;
+  }
+
+  /* Professional gradient backgrounds */
+  .gradient-financial {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  /* Smooth transitions for all interactive elements */
+  * {
+    @apply transition-colors duration-200;
   }
 }
