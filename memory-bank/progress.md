@@ -43,12 +43,12 @@
 **Status**: ✅ COMPLETE - Application configured and ready for deployment on Render.com
 
 **Deployment Configuration:**
-- Platform: Render.com (Professional subscription)
+- Platform: Render.com (Professional subscription - $19/month already paid)
 - Architecture: Single web service (backend + frontend static files)
 - Database: SQLite with persistent disk (1GB at `/opt/render/project/.data/`)
 - Build: Automated via Render Blueprint (`render.yaml`)
 - Security: Rate limiting (express-rate-limit), Helmet headers, production CORS
-- Cost: ~$25-30/month
+- Cost: **$0.25/month** (only persistent disk, free tier compute with Pro benefits)
 
 **Files Created:**
 - ✅ `render.yaml` - Render Blueprint for infrastructure-as-code

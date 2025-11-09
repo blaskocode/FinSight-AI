@@ -1,9 +1,8 @@
 services:
   - type: web
     name: finsight-ai
-    env: node
-    region: oregon
-    plan: standard
+    runtime: node
+    plan: free
     buildCommand: npm run install:all && npm run build
     startCommand: npm start
     envVars:

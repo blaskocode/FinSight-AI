@@ -200,10 +200,11 @@ npm run build  # Build both backend and frontend
 - `ADMIN_PASSWORD` (secret)
 
 **Infrastructure**:
-- Web Service: Standard plan (~$25/month)
+- Web Service: Free tier ($0/month) with Pro subscription benefits
 - Persistent Disk: 1GB SSD ($0.25/month)
-- Region: Oregon (us-west)
-- Zero cold starts (Render Pro benefit)
+- Zero cold starts (included with $19/month Professional subscription)
+- Fast builds (included with Professional subscription)
+- Total additional cost: $0.25/month
 
 **Security**:
 - Rate limiting (100 requests per 15 minutes per IP)
