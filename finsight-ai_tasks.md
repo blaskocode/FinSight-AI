@@ -2513,3 +2513,81 @@ If time is limited, prioritize in this order:
 ---
 
 **Good luck building FinSight AI! 🚀💰📊**
+---
+
+### Nov 9, 2024 - User Access Management & Login Screen Improvements
+
+#### Feature: Revoke Access Functionality ✅
+**Status**: Complete
+**Issue**: Users needed the ability to revoke access to their financial data, which should also reset their onboarding state for security/privacy.
+
+**Implementation**:
+- **Dashboard Header**: Added "Revoke Access" button (red styling) next to "Sign Out" button
+- **ConsentScreen**: Added "Revoke Access & Sign Out" button as second option alongside consent button
+- **Sign Out Dialog**: Added third option "Revoke Access" (red button) between Cancel and Sign Out
+  - Message explains data retention unless access is revoked
+- **Backend Enhancement**: Updated `/api/consent` endpoint to return success (200) when consent is already revoked
+  - Treats already-revoked as acceptable state rather than error
+- **Frontend Error Handling**: Gracefully handles already-revoked consent
+  - If revocation returns 404 with "no active consent" message, proceeds with sign out (goal already achieved)
+- **Onboarding Reset**: Revoking access clears `onboarding_complete_${userId}` flag
+  - Ensures users go through onboarding again on next login
+- **Sign Out Behavior**: Regular sign out does NOT revoke access or clear onboarding flag
+  - Preserves user state for next login
+
+**Files Updated**:
+- `backend/src/index.ts` - Modified `/api/consent` endpoint for already-revoked handling
+- `frontend/src/components/Dashboard.tsx` - Added revoke button and confirmation dialog
+- `frontend/src/components/ConsentScreen.tsx` - Added revoke button and confirmation dialog
+- `frontend/src/components/ConfirmDialog.tsx` - Added support for third action button, loading state
+- `frontend/src/store/useStore.ts` - Modified `reset()` to preserve onboarding flag on regular sign out
+
+**Testing**:
+- ✅ Revoke from Dashboard - clears onboarding, requires re-onboarding on next login
+- ✅ Revoke from ConsentScreen - clears onboarding, returns to login
+- ✅ Revoke from Sign Out dialog - clears onboarding, returns to login
+- ✅ Sign out without revoking - preserves state, no re-onboarding required
+- ✅ Revoking already-revoked consent - gracefully proceeds with sign out
+
+---
+
+#### Feature: Login Screen Improvements ✅
+**Status**: Complete
+**Issue**: Sample user cards on login screen needed visual polish - uniform sizing, persona-specific colors, and proper centering.
+
+**Implementation**:
+- **Persona Colors**: Each sample user card uses persona-specific colors from `personaConfig`
+  - High Utilization: Red (`bg-red-100`, `border-red-300`, `text-red-800`, `hover:border-red-600`)
+  - Variable Income: Orange (`bg-orange-100`, `border-orange-300`, `text-orange-800`, `hover:border-orange-600`)
+  - Subscription Heavy: Purple (`bg-purple-100`, `border-purple-300`, `text-purple-800`, `hover:border-purple-600`)
+  - Savings Builder: Green (`bg-green-100`, `border-green-300`, `text-green-800`, `hover:border-green-600`)
+  - Lifestyle Creep: Blue (`bg-blue-100`, `border-blue-300`, `text-blue-800`, `hover:border-blue-600`)
+- **Uniform Sizing**: All cards have fixed height (`h-[85px]`) and width (`w-full`)
+  - Ensures consistent appearance even with varying text lengths
+- **Centered 5th Card**: 5th card (lifestyle creep) is centered on its row
+  - Uses `sm:col-span-2 sm:mx-auto sm:w-[calc(50%-0.25rem)]` for responsive centering
+- **Lifestyle Creep Sample User**: Created Samantha Carson (`samantha.carson`)
+  - Used `scripts/assign-lifestyle-creep-persona.js` to assign persona
+  - Used `scripts/fix-lifestyle-creep-persona.js` to ensure it's the latest persona
+  - Updated backend fallback from "Sophia Anderson" to "Samantha Carson"
+- **Sample Users Endpoint Enhancement**: Updated to verify fallback users exist before using them
+  - Prevents 401 errors from non-existent fallback users
+  - Uses `findUserByUsername()` to verify existence
+
+**Files Updated**:
+- `frontend/src/components/Login.tsx` - Persona colors, uniform sizing, centered 5th card
+- `backend/src/index.ts` - Fallback user verification, updated lifestyle_creep fallback
+- `scripts/assign-lifestyle-creep-persona.js` - Script to assign lifestyle_creep persona
+- `scripts/fix-lifestyle-creep-persona.js` - Script to ensure latest persona assignment
+
+**Testing**:
+- ✅ All 5 sample users display with correct persona colors
+- ✅ All cards have uniform size (height and width)
+- ✅ 5th card (Samantha Carson - Lifestyle Creep) is centered on its row
+- ✅ Hover effects show darker accent borders for each persona
+- ✅ No 401 errors when logging in with any sample user
+- ✅ Samantha Carson has lifestyle_creep as latest persona
+
+---
+
+**All improvements tested and verified! 🎉**
