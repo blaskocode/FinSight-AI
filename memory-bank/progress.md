@@ -39,17 +39,22 @@
 - **PR-58**: Calculate Historical Persona Evaluations for Past Months ✅ - One-time operation to backfill historical persona assignments for past months (up to 12 months).
 - **PR-59**: Show Persona Evolution History in Timeline ✅ - PersonaTimeline component displays full history of persona evolution (ready once PR-58 backfill is run).
 
-### 🚀 Production Deployment (Nov 9, 2024)
-**Status**: ✅ COMPLETE - Application configured and ready for deployment on Render.com
+### 🚀 Production Deployment (Nov 10, 2024)
+**Status**: ✅ COMPLETE - Application successfully deployed and running on Render.com
 
 **Deployment Configuration:**
 - Platform: Render.com (Professional subscription - $19/month already paid)
 - Architecture: Single web service (backend + frontend static files)
 - Database: SQLite with persistent disk (1GB at `/opt/render/project/.data/`)
+  - **Database Seeding**: 34MB seed database with 100 users automatically copied on first boot
+  - **Sample Users**: Diana Huang, Terry Kim, Samantha Carson, and 97 others available for login
 - Build: Automated via Render Blueprint (`render.yaml`)
+  - **Build Script**: Copies seed database and JSON files to dist folder
+  - **Command**: `tsc && cp recommendations/*.json dist/recommendations/ && cp finsight.db dist/`
 - Security: Rate limiting (express-rate-limit), Helmet headers, production CORS
 - Plan: Starter ($7/month) - required for persistent disk support
 - Cost: **$7.25/month** ($7 Starter plan + $0.25 persistent disk)
+- **Production URL**: https://finsight-ai-l83w.onrender.com
 
 **Files Created:**
 - ✅ `render.yaml` - Render Blueprint for infrastructure-as-code

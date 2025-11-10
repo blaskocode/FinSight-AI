@@ -5,15 +5,20 @@
 ### Phase: Production Deployment & Infrastructure
 **Status**: Preparing application for production deployment on Render.com with Render Professional subscription.
 
-**PRODUCTION DEPLOYMENT** (Current): Configuring application for production deployment on Render.com:
+**PRODUCTION DEPLOYMENT** (Current): Successfully deployed to production on Render.com with database seeding:
 - **Deployment Platform**: Render.com (Professional subscription)
 - **Architecture**: Single web service serving both backend API and frontend static files
 - **Database**: SQLite with persistent disk (1GB volume at `/opt/render/project/.data/`)
-- **Build Process**: Install all deps → Build backend (TS→JS) → Build frontend (React→static) → Start server
+  - **Seed Database**: `backend/finsight.db` (34MB with 100 users) copied to `backend/dist/finsight.db` during build
+  - **First Boot Seeding**: On production startup, if target DB is missing or < 1KB, seed DB is copied to persistent disk
+  - **Startup Log**: Server logs `📀 Seed database copied to /opt/render/project/.data/finsight.db` on first boot
+- **Build Process**: Install all deps → Build backend (TS→JS, copy JSON, copy DB) → Build frontend (React→static) → Start server
+- **Build Script**: `tsc && cp recommendations/*.json dist/recommendations/ && cp finsight.db dist/ 2>/dev/null || true`
 - **Environment**: Production environment variables (OPENAI_API_KEY, ADMIN_PASSWORD, DATABASE_PATH)
+- **API Base URL**: Frontend uses `/api` in production (same-origin), `http://localhost:3002/api` in dev
 - **Security**: Rate limiting, Helmet security headers, production CORS configuration
 - **Monitoring**: Render dashboard logging and metrics
-- **Cost**: ~$25-30/month (Standard plan + 1GB disk)
+- **Cost**: ~$7.25/month (Starter plan + 1GB persistent disk)
 - **Render Runtime Fixes (Nov 10, 2025)**: Updated Express catch-all routing to use an Express 5-compatible regex (`/^\/(?!api).*/`), resolved the frontend `dist` directory via `path.resolve(__dirname, '../../..', 'frontend', 'dist')`, limited the HTML debug root route to non-production, added first-boot database seeding that copies `backend/finsight.db` into Render's persistent disk when the target DB is missing or empty, and ensured the frontend API client defaults to `/api` in production builds so same-origin requests hit the backend instead of `localhost`.
 
 ### Phase: Post-Launch Features & User Experience Improvements (Previous)
