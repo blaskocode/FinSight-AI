@@ -823,7 +823,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(frontendDistPath));
   
   // Handle React Router - send all non-API requests to index.html
-  app.get('/:path(*)', (req: Request, res: Response) => {
+  app.get(/^\/(?!api).*/, (req: Request, res: Response) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
   
