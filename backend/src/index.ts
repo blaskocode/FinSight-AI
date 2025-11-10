@@ -1,6 +1,7 @@
 // Load environment variables FIRST before any other imports
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 
 // Load .env file from backend directory
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
@@ -25,6 +26,33 @@ import { findUserByUsername } from '../utils/username';
 
 const app = express();
 const PORT = process.env.PORT || 3002;
+
+// Ensure production database exists (copy seeded DB on first boot)
+const defaultDbPath = path.join(__dirname, '..', 'finsight.db');
+const targetDbPath = process.env.DATABASE_PATH || defaultDbPath;
+
+if (process.env.NODE_ENV === 'production') {
+  try {
+    const targetExists = fs.existsSync(targetDbPath);
+    const targetSize = targetExists ? fs.statSync(targetDbPath).size : 0;
+
+    if (!targetExists || targetSize < 1024) {
+      const targetDir = path.dirname(targetDbPath);
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
+
+      if (fs.existsSync(defaultDbPath)) {
+        fs.copyFileSync(defaultDbPath, targetDbPath);
+        console.log(`📀 Seed database copied to ${targetDbPath}`);
+      } else {
+        console.warn(`⚠️ Seed database not found at ${defaultDbPath}. Database may be empty.`);
+      }
+    }
+  } catch (dbInitError) {
+    console.error('❌ Failed to ensure production database exists:', dbInitError);
+  }
+}
 
 // Security Middleware
 // Helmet adds various HTTP headers for security

@@ -80,7 +80,7 @@
 - ✅ Frontend builds successfully (minor TypeScript warnings, non-critical)
 - ✅ All production scripts configured
 - ✅ Ready to deploy to Render.com
-- ✅ Express 5 catch-all route updated to regex (`/^\/(?!api).*/`), static asset path resolved with `path.resolve(__dirname, '../../..', 'frontend', 'dist')`, and the development-only HTML root gated behind `NODE_ENV !== 'production'` to eliminate Render runtime errors and ensure the SPA serves at `/`.
+- ✅ Express 5 catch-all route updated to regex (`/^\/(?!api).*/`), static asset path resolved with `path.resolve(__dirname, '../../..', 'frontend', 'dist')`, development-only HTML root gated behind `NODE_ENV !== 'production'`, and first-boot database seeding added so `backend/finsight.db` copies into the Render persistent disk automatically when empty.
 
 **Next Steps:**
 1. Push code to GitHub
