@@ -817,7 +817,7 @@ npm run dev
 
 // Serve frontend static files in production
 if (process.env.NODE_ENV === 'production') {
-  const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+  const frontendDistPath = path.resolve(__dirname, '../../..', 'frontend', 'dist');
   
   // Serve static files
   app.use(express.static(frontendDistPath));

@@ -80,6 +80,7 @@
 - ✅ Frontend builds successfully (minor TypeScript warnings, non-critical)
 - ✅ All production scripts configured
 - ✅ Ready to deploy to Render.com
+- ✅ Express 5 catch-all route updated to regex (`/^\/(?!api).*/`) and static asset path resolved with `path.resolve(__dirname, '../../..', 'frontend', 'dist')` to eliminate Render runtime errors when serving the SPA.
 
 **Next Steps:**
 1. Push code to GitHub
