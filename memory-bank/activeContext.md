@@ -9,9 +9,11 @@
 - **Deployment Platform**: Render.com (Professional subscription)
 - **Architecture**: Single web service serving both backend API and frontend static files
 - **Database**: SQLite with persistent disk (1GB volume at `/opt/render/project/.data/`)
-  - **Seed Database**: `backend/finsight.db` (34MB with 100 users) copied to `backend/dist/finsight.db` during build
+  - **Seed Database**: `backend/finsight.db` (34MB with 100 users) **force-added to git repo** (bypasses `*.db` in `.gitignore`)
+  - **Build Process**: Database copied to `backend/dist/finsight.db` during build, then copied to persistent disk on first boot
   - **First Boot Seeding**: On production startup, if target DB is missing or < 1KB, seed DB is copied to persistent disk
   - **Startup Log**: Server logs `📀 Seed database copied to /opt/render/project/.data/finsight.db` on first boot
+  - **Critical Fix (Nov 10)**: Database wasn't deploying because `.gitignore` blocked `*.db` files. Fixed by running `git add -f backend/finsight.db` to force-add despite gitignore.
 - **Build Process**: Install all deps → Build backend (TS→JS, copy JSON, copy DB) → Build frontend (React→static) → Start server
 - **Build Script**: `tsc && cp recommendations/*.json dist/recommendations/ && cp finsight.db dist/ 2>/dev/null || true`
 - **Environment**: Production environment variables (OPENAI_API_KEY, ADMIN_PASSWORD, DATABASE_PATH)

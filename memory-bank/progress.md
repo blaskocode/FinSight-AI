@@ -48,6 +48,7 @@
 - Database: SQLite with persistent disk (1GB at `/opt/render/project/.data/`)
   - **Database Seeding**: 34MB seed database with 100 users automatically copied on first boot
   - **Sample Users**: Diana Huang, Terry Kim, Samantha Carson, and 97 others available for login
+  - **Critical Fix**: Database file was blocked by `.gitignore` (`*.db`). Fixed by force-adding to git: `git add -f backend/finsight.db`
 - Build: Automated via Render Blueprint (`render.yaml`)
   - **Build Script**: Copies seed database and JSON files to dist folder
   - **Command**: `tsc && cp recommendations/*.json dist/recommendations/ && cp finsight.db dist/`
@@ -55,6 +56,7 @@
 - Plan: Starter ($7/month) - required for persistent disk support
 - Cost: **$7.25/month** ($7 Starter plan + $0.25 persistent disk)
 - **Production URL**: https://finsight-ai-l83w.onrender.com
+- **Git Commit**: Database force-added and pushed (commit cba04e9)
 
 **Files Created:**
 - ✅ `render.yaml` - Render Blueprint for infrastructure-as-code
