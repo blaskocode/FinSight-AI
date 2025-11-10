@@ -56,7 +56,7 @@ app.use('/api/', limiter);
 app.use(express.json());
 
 // Performance: Add caching headers for GET requests
-app.use((req: Request, res: Response, next) => {
+app.use((req: Request, res: Response, next: express.NextFunction) => {
   // Cache static data for 5 minutes, dynamic data for 30 seconds
   if (req.method === 'GET') {
     // Health check and static endpoints - cache longer
@@ -345,7 +345,7 @@ app.get('/api/recommendations/:user_id', requireConsent, async (req: Request, re
 });
 
 // Payment Plan Endpoints
-app.get('/api/payment-plan/:user_id', requireConsent, async (req, res) => {
+app.get('/api/payment-plan/:user_id', requireConsent, async (req: Request, res: Response) => {
   const { user_id: userId } = req.params;
   const { strategy } = req.query;
 
@@ -362,7 +362,7 @@ app.get('/api/payment-plan/:user_id', requireConsent, async (req, res) => {
   }
 });
 
-app.get('/api/payment-plan/:user_id/compare', requireConsent, async (req, res) => {
+app.get('/api/payment-plan/:user_id/compare', requireConsent, async (req: Request, res: Response) => {
   const { user_id: userId } = req.params;
 
   try {
@@ -375,7 +375,7 @@ app.get('/api/payment-plan/:user_id/compare', requireConsent, async (req, res) =
 });
 
 // Chat Endpoint
-app.post('/api/chat/:user_id', requireConsent, async (req, res) => {
+app.post('/api/chat/:user_id', requireConsent, async (req: Request, res: Response) => {
   const { user_id: userId } = req.params;
   const { message, conversation_id } = req.body;
 
@@ -408,7 +408,7 @@ app.post('/api/chat/:user_id', requireConsent, async (req, res) => {
 });
 
 // Transaction History Endpoint
-app.get('/api/transactions/:user_id', requireConsent, async (req, res) => {
+app.get('/api/transactions/:user_id', requireConsent, async (req: Request, res: Response) => {
   const { user_id: userId } = req.params;
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 20;
@@ -424,7 +424,7 @@ app.get('/api/transactions/:user_id', requireConsent, async (req, res) => {
 });
 
 // Persona History Endpoint - Get persona evolution timeline
-app.get('/api/persona-history/:user_id', requireConsent, async (req, res) => {
+app.get('/api/persona-history/:user_id', requireConsent, async (req: Request, res: Response) => {
   const { user_id: userId } = req.params;
   const months = parseInt(req.query.months as string) || 12;
 
@@ -497,7 +497,7 @@ app.get('/api/overarching-message/:user_id', requireConsent, async (req: Request
 });
 
 // Spending Analysis Endpoint
-app.get('/api/spending-analysis/:user_id', requireConsent, async (req, res) => {
+app.get('/api/spending-analysis/:user_id', requireConsent, async (req: Request, res: Response) => {
   const { user_id: userId } = req.params;
   const months = parseInt(req.query.months as string) || 6;
 
