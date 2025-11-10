@@ -14,7 +14,7 @@ interface PersonaTimelineProps {
 /**
  * Generate narrative description of persona evolution
  */
-function generateNarrative(timeline: PersonaTimelineEntry[], currentPersona: string): string {
+function generateNarrative(timeline: PersonaTimelineEntry[], _currentPersona: string): string {
   if (timeline.length === 0) {
     return 'Your financial journey is just beginning!';
   }
@@ -151,7 +151,8 @@ function BadgeWithTooltip({
 
 export function PersonaTimeline({ userId }: PersonaTimelineProps) {
   const [timeline, setTimeline] = useState<PersonaTimelineEntry[]>([]);
-  const [history, setHistory] = useState<PersonaHistoryEntry[]>([]);
+  // History state kept for potential future use
+  const [, setHistory] = useState<PersonaHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [narrative, setNarrative] = useState('');
@@ -266,7 +267,8 @@ export function PersonaTimeline({ userId }: PersonaTimelineProps) {
             {timeline.map((entry, index) => {
               const config = getPersonaConfig(entry.persona_type);
               const Icon = config.icon;
-              const isLast = index === timeline.length - 1;
+              // isLast kept for potential future use
+              // const isLast = index === timeline.length - 1;
               const isTransition = index > 0 && entry.persona_type !== timeline[index - 1].persona_type;
               const isFirst = index === 0;
               const isLastItem = index === timeline.length - 1;

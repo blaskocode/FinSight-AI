@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
-import { PersonaCard } from './PersonaCard';
+// PersonaCard not used - using HeroPersonaCard instead
 import { HeroPersonaCard } from './HeroPersonaCard';
 import { FinancialHealthScore } from './FinancialHealthScore';
 import { QuickStatsWidget } from './QuickStatsWidget';
@@ -16,7 +16,7 @@ import { SkeletonLoader } from './SkeletonLoader';
 import { ErrorMessage } from './ErrorMessage';
 import { ConfirmDialog } from './ConfirmDialog';
 import { OverarchingMessage } from './OverarchingMessage';
-import { Loader2, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 export function Dashboard() {
   const {

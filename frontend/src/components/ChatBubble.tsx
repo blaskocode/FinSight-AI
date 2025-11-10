@@ -1,7 +1,7 @@
 // ChatBubble Component
 // Floating chat button that expands into a chat window
 
-import { MessageCircle, X } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { ChatWindow } from './ChatWindow';
 
 interface ChatBubbleProps {

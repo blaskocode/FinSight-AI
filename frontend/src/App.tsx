@@ -35,7 +35,9 @@ function App() {
     const unsubscribe = toastStore.subscribe(() => {
       setToasts(toastStore.getToasts());
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Restore login state from localStorage on app mount (PR-54)

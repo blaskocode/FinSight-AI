@@ -13,7 +13,8 @@ interface OverarchingMessageProps {
 export function OverarchingMessage({ userId }: OverarchingMessageProps) {
   const [message, setMessage] = useState<OverarchingMessageResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Error state kept for potential future error display
+  const [, setError] = useState<string | null>(null);
   const loadingRef = useRef(false);
   const { persona } = useStore(); // Get persona from store to create persona-specific fallbacks
   // Note: persona.type is the persona type (e.g., 'subscription_heavy')

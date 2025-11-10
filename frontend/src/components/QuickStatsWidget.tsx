@@ -2,7 +2,7 @@
 // Displays persona-specific financial metrics with trend indicators and sparklines
 
 import { TrendingUp, TrendingDown, Minus, CreditCard, DollarSign, Calendar, PiggyBank, AlertCircle, Layers, ArrowUpRight } from 'lucide-react';
-import { getPersonaConfig } from '../utils/personaConfig';
+// getPersonaConfig not used in this component
 
 interface QuickStatsWidgetProps {
   persona: {

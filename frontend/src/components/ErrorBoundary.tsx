@@ -1,7 +1,8 @@
 // Error Boundary Component
 // Catches React errors and displays a user-friendly error message
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 interface Props {
@@ -48,7 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-gray-600 mb-6">
               We encountered an unexpected error. Please try refreshing the page.
             </p>
-            {this.state.error && process.env.NODE_ENV === 'development' && (
+            {this.state.error && import.meta.env.DEV && (
               <div className="mb-6 p-4 bg-gray-100 rounded-lg text-left">
                 <p className="text-xs font-mono text-gray-700 break-all">
                   {this.state.error.toString()}

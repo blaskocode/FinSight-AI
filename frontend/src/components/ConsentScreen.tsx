@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { ErrorMessage } from './ErrorMessage';
 import { ConfirmDialog } from './ConfirmDialog';
-import { getErrorMessage } from '../services/api';
+// getErrorMessage imported but not used - keeping for potential future use
 
 export function ConsentScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);

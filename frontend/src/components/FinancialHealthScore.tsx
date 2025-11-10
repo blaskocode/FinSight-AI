@@ -34,7 +34,8 @@ function calculateHealthScore(signals: FinancialHealthScoreProps['signals']): {
 } {
   const components: ScoreComponent[] = [];
   let totalScore = 0;
-  const maxPossibleScore = 100;
+  // maxPossibleScore kept for potential future use
+  // const maxPossibleScore = 100;
 
   // 1. Credit Utilization (0-25 points)
   const utilization = typeof signals.utilization === 'number'

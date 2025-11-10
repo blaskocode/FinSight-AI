@@ -3,8 +3,9 @@
 
 import { useState, useEffect } from 'react';
 import { Search, ChevronLeft, ChevronRight, Loader2, CreditCard } from 'lucide-react';
-import { fetchTransactions } from '../services/api';
+import { fetchTransactions, getErrorMessage } from '../services/api';
 import type { Transaction, TransactionsResponse } from '../services/api';
+import { ErrorMessage } from './ErrorMessage';
 
 interface TransactionHistoryProps {
   userId: string;

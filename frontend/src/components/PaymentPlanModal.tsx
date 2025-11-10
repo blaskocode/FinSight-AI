@@ -5,7 +5,7 @@ import { useState, useEffect, memo, useMemo } from 'react';
 import { X, TrendingDown, Target } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { fetchPaymentPlanComparison } from '../services/api';
-import type { PaymentPlan, PaymentPlanComparison } from '../services/api';
+import type { PaymentPlanComparison } from '../services/api';
 
 interface PaymentPlanModalProps {
   userId: string | null;
