@@ -48,7 +48,8 @@
 - Database: SQLite with persistent disk (1GB at `/opt/render/project/.data/`)
 - Build: Automated via Render Blueprint (`render.yaml`)
 - Security: Rate limiting (express-rate-limit), Helmet headers, production CORS
-- Cost: **$0.25/month** (only persistent disk, free tier compute with Pro benefits)
+- Plan: Starter ($7/month) - required for persistent disk support
+- Cost: **$7.25/month** ($7 Starter plan + $0.25 persistent disk)
 
 **Files Created:**
 - ✅ `render.yaml` - Render Blueprint for infrastructure-as-code
