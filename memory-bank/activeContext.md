@@ -14,7 +14,7 @@
 - **Security**: Rate limiting, Helmet security headers, production CORS configuration
 - **Monitoring**: Render dashboard logging and metrics
 - **Cost**: ~$25-30/month (Standard plan + 1GB disk)
-- **Render Runtime Fixes (Nov 10, 2025)**: Updated Express catch-all routing to use an Express 5-compatible regex (`/^\/(?!api).*/`), resolved the frontend `dist` directory via `path.resolve(__dirname, '../../..', 'frontend', 'dist')`, limited the HTML debug root route to non-production, and added first-boot database seeding that copies `backend/finsight.db` into Render's persistent disk when the target DB is missing or empty.
+- **Render Runtime Fixes (Nov 10, 2025)**: Updated Express catch-all routing to use an Express 5-compatible regex (`/^\/(?!api).*/`), resolved the frontend `dist` directory via `path.resolve(__dirname, '../../..', 'frontend', 'dist')`, limited the HTML debug root route to non-production, added first-boot database seeding that copies `backend/finsight.db` into Render's persistent disk when the target DB is missing or empty, and ensured the frontend API client defaults to `/api` in production builds so same-origin requests hit the backend instead of `localhost`.
 
 ### Phase: Post-Launch Features & User Experience Improvements (Previous)
 **Status**: Recent work focused on user access management, login screen improvements, and handling edge cases gracefully.
