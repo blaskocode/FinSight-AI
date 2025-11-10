@@ -772,9 +772,10 @@ app.get('/api/admin/audit', async (req: Request, res: Response) => {
   }
 });
 
-// Root path - serve simple HTML page
-app.get('/', (req: Request, res: Response) => {
-  res.send(`
+// Root path - serve simple HTML page (development only)
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/', (req: Request, res: Response) => {
+    res.send(`
     <!DOCTYPE html>
     <html>
       <head>
@@ -813,7 +814,8 @@ npm run dev
       </body>
     </html>
   `);
-});
+  });
+}
 
 // Serve frontend static files in production
 if (process.env.NODE_ENV === 'production') {
